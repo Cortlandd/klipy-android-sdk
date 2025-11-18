@@ -1,4 +1,4 @@
-package com.cortlandwalker.klipy
+package com.klipy.klipy_demo
 
 import org.junit.Test
 

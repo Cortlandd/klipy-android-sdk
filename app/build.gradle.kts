@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    namespace = "com.cortlandwalker.klipy_demo"
+    namespace = "com.klipy.klipy_demo"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.cortlandwalker.klipy_sdk"
+        applicationId = "com.klipy.klipy_demo"
         minSdk = 24
         targetSdk = 36
         versionCode = 1

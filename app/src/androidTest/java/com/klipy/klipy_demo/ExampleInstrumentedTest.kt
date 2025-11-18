@@ -1,4 +1,4 @@
-package com.cortlandwalker.klipy_demo
+package com.klipy.klipy_demo
 
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -19,6 +19,6 @@ class ExampleInstrumentedTest {
     fun useAppContext() {
         // Context of the app under test.
         val appContext = InstrumentationRegistry.getInstrumentation().targetContext
-        assertEquals("com.cortlandwalker.klipy_sdk", appContext.packageName)
+        assertEquals("com.klipy.klipy_demo", appContext.packageName)
     }
 }
