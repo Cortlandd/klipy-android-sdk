@@ -34,9 +34,9 @@ dependencies {
 |----------------------|------------------------|------------------------|------------------------|------------------------|------------------------|
 | ![](samples/img.png) | ![](samples/img_1.png) | ![](samples/img_2.png) | ![](samples/img_3.png) | ![](samples/img_4.png) | ![](samples/img_5.png) |
 
-| Sample Video                  |
-|-------------------------------|
-| ![](samples/sample_video.mp4) |
+| Sample Video                              |
+|-------------------------------------------|
+| ![SAMPLE VIDEO](samples/sample_video.mp4) |
 
 ## Basic Usage
 
