@@ -3,6 +3,12 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     id("org.jetbrains.kotlin.plugin.serialization") version "2.0.0"
+
+    // For ksp and ROOM
+    id("com.google.devtools.ksp") version "2.0.21-1.0.27"
+
+    id("com.google.dagger.hilt.android") version "2.57.2"
+    id("androidx.navigation.safeargs.kotlin") version "2.9.5"
 }
 
 android {
@@ -28,6 +34,11 @@ android {
             )
         }
     }
+
+    hilt {
+        enableAggregatingTask = false
+    }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
@@ -37,6 +48,10 @@ android {
     }
     buildFeatures {
         compose = true
+        viewBinding = true
+    }
+    configurations.all {
+        exclude(group = "xpp3", module = "xpp3")
     }
 }
 
@@ -82,4 +97,23 @@ dependencies {
     // AppCompat
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.appcompat.resources)
+
+    // Coroutines
+    implementation(libs.kotlinx.coroutines.android)
+
+    // Room
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.ktx)
+    ksp(libs.androidx.room.compiler)
+
+    // Hilt
+    implementation(libs.hilt.android)
+    ksp(libs.hilt.android.compiler)
+    implementation(libs.androidx.hilt.navigation.fragment)
+}
+
+ksp {
+    arg("room.schemaLocation", "${projectDir}/schemas")
+    arg("room.incremental", "true")
+    arg("room.generateKotlin", "true")
 }
