@@ -25,3 +25,4 @@ rootProject.name = "Klipy"
 include(":app")
 include(":klipy")
 include(":klipy-ui")
+include(":demo")
