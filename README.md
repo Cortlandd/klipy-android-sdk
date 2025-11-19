@@ -1,20 +1,114 @@
-# Klipy Android SDK (local module)
+# Klipy Android SDK
 
-This module is a small Android SDK around the Klipy API, extracted from the official
-demo app and refactored into a clean `KlipyRepository` interface.
+[![License](https://img.shields.io/cocoapods/l/SwiftChess.svg?style=flat)](http://github.com/Cortlandd/klipy-android-sdk/blob/main/LICENSE.md)
 
-It handles:
-
-- Retrofit + OkHttp client and JSON parsing (Gson)
-- Ads / device query parameters via an interceptor
-- DTO → domain mapping
-- Simple pagination per filter (`recent`, `trending`, or search query)
-- Category fetching
+An Android SDK wrapping the [Klipy](https://klipy.com) GIF / Clips / Stickers API.
 
 ## Installation
 
-1. Copy the `klipy-sdk` module into your Android project.
-2. In your root `settings.gradle`, include it:
-
+1. Add the JitPack repository to your project:
 ```kotlin
-include(":klipy-sdk")
+// settings.gradle.kts
+dependencyResolutionManagement {
+   repositories {
+       google()
+       mavenCentral()
+       maven("https://jitpack.io")
+   }
+}
+```
+
+2. Add the dependency (replace 0.1.0 with the latest tag):
+```
+// app/build.gradle.kts
+dependencies {
+    implementation("com.github.Cortlandd.klipy-android-sdk:klipy:1.0.0")
+}
+```
+
+## Basic Usage
+
+Application
+```
+class MyApp : Application() {
+
+    lateinit var klipyRepository: KlipyRepository
+        private set
+
+    override fun onCreate() {
+        super.onCreate()
+
+        klipyRepository = KlipySdk.create(
+            context = this,
+            secretKey = BuildConfig.KLIPY_SECRET_KEY, // or from remote config
+            baseApiUrl = "https://api.klipy.com/api/v1/", // already default
+            enableLogging = BuildConfig.DEBUG
+        )
+    }
+}
+```
+
+In a ViewModel, you can inject / grab the repository:
+```
+class GifViewModel(
+    private val repo: KlipyRepository
+) : ViewModel() {
+
+    val state = MutableStateFlow(GifState())
+
+    fun loadCategories() {
+        viewModelScope.launch {
+            repo.getCategories(MediaType.GIF)
+                .onSuccess { categories ->
+                    state.update { it.copy(categories = categories) }
+                }
+                .onFailure { error ->
+                    // handle error
+                }
+        }
+    }
+
+    fun loadTrending() {
+        viewModelScope.launch {
+            repo.getMedia(MediaType.GIF, filter = "trending")
+                .onSuccess { mediaData ->
+                    state.update {
+                        it.copy(
+                            items = mediaData.mediaItems,
+                            adMaxResizePct = mediaData.adMaxResizePercentage
+                        )
+                    }
+                }
+        }
+    }
+
+    fun search(query: String) {
+        viewModelScope.launch {
+            // Each subsequent call with same query loads next page.
+            repo.getMedia(MediaType.GIF, filter = query)
+                .onSuccess { mediaData ->
+                    state.update { old ->
+                        old.copy(items = old.items + mediaData.mediaItems)
+                    }
+                }
+        }
+    }
+}
+```
+
+To report or hide items:
+
+```
+viewModelScope.launch {
+    repo.report(MediaType.GIF, slug = "some-slug", reason = "Inappropriate")
+    repo.hideFromRecent(MediaType.GIF, slug = "some-slug")
+}
+```
+
+To trigger analytics events:
+```
+viewModelScope.launch {
+    repo.triggerShare(MediaType.CLIP, slug = "clip-slug")
+    repo.triggerView(MediaType.CLIP, slug = "clip-slug")
+}
+```
