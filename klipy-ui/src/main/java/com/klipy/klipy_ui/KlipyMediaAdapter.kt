@@ -17,6 +17,7 @@ import com.bumptech.glide.request.RequestListener
 import com.bumptech.glide.request.target.Target
 import com.cortlandwalker.klipy_ui.databinding.ItemKlipyMediaBinding
 import com.klipy.sdk.model.MediaItem
+import com.klipy.sdk.model.MediaType
 
 class KlipyMediaAdapter(
     private val onClick: (MediaItem) -> Unit
@@ -40,25 +41,25 @@ class KlipyMediaAdapter(
         fun bind(item: MediaItem) {
             val context = binding.imageMedia.context
 
-            // Prefer high-quality first, fallback to low-quality
             val meta = item.highQualityMetaData ?: item.lowQualityMetaData
             val url = meta?.url
 
             Log.d(
                 "KlipyMediaAdapter",
-                "bind id=${item.id}, url=$url, meta=$meta, hasPlaceholder=${item.placeHolder != null}"
+                "bind id=${item.id}, type=${item.mediaType}, url=$url"
             )
 
-            // Reset visual state
+            // Reset UI
             binding.skeletonView.visibility = View.VISIBLE
             binding.itemProgress.visibility = View.VISIBLE
             binding.imageMedia.visibility = View.INVISIBLE
             binding.imageMedia.setImageDrawable(null)
-            binding.imageMedia.scaleType = ImageView.ScaleType.CENTER_CROP
+            binding.playIcon.visibility =
+                if (item.mediaType == MediaType.CLIP) View.VISIBLE else View.GONE
 
             if (!url.isNullOrBlank()) {
                 Glide.with(context)
-                    .load(url) // Glide will auto-detect GIF vs static image
+                    .load(url) // GIF, PNG, WebP, mp4 all handled
                     .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
                     .listener(object : RequestListener<Drawable> {
                         override fun onLoadFailed(
@@ -72,10 +73,10 @@ class KlipyMediaAdapter(
                                 "Glide load failed for id=${item.id}, url=$url",
                                 e
                             )
-                            // Keep skeleton as a fallback, hide spinner
                             binding.itemProgress.visibility = View.GONE
+                            // keep skeleton + playIcon as fallback
                             binding.imageMedia.visibility = View.INVISIBLE
-                            return false // let Glide handle error drawable if set
+                            return false
                         }
 
                         override fun onResourceReady(
@@ -85,22 +86,20 @@ class KlipyMediaAdapter(
                             dataSource: DataSource?,
                             isFirstResource: Boolean
                         ): Boolean {
-                            // Show the loaded image / GIF
                             binding.skeletonView.visibility = View.GONE
                             binding.itemProgress.visibility = View.GONE
                             binding.imageMedia.visibility = View.VISIBLE
-                            return false // let Glide set the drawable
+                            // playIcon stays visible if this is a CLIP
+                            return false
                         }
                     })
                     .into(binding.imageMedia)
             } else if (item.placeHolder != null) {
-                // Fallback: static placeholder bitmap
                 binding.skeletonView.visibility = View.GONE
                 binding.itemProgress.visibility = View.GONE
                 binding.imageMedia.visibility = View.VISIBLE
                 binding.imageMedia.setImageBitmap(item.placeHolder)
             } else {
-                // Nothing to show: skeleton only, no spinner
                 binding.itemProgress.visibility = View.GONE
                 binding.imageMedia.visibility = View.INVISIBLE
             }

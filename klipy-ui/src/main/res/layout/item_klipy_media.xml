@@ -21,6 +21,15 @@
         android:scaleType="centerCrop"
         android:visibility="invisible" />
 
+    <!-- Small play icon overlay, only for clips -->
+    <ImageView
+        android:id="@+id/playIcon"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:layout_gravity="center"
+        android:src="@android:drawable/ic_media_play"
+        android:visibility="gone" />
+
     <ProgressBar
         android:id="@+id/itemProgress"
         style="?android:attr/progressBarStyleSmall"
