@@ -6,11 +6,27 @@
     android:foreground="?attr/selectableItemBackground"
     android:padding="4dp">
 
+    <!-- Grey skeleton block while image loads -->
+    <View
+        android:id="@+id/skeletonView"
+        android:layout_width="match_parent"
+        android:layout_height="120dp"
+        android:background="@color/klipy_skeleton_grey" />
+
     <ImageView
-        android:id="@+id/image_media"
+        android:id="@+id/imageMedia"
         android:layout_width="match_parent"
         android:layout_height="120dp"
         android:adjustViewBounds="true"
-        android:scaleType="centerCrop" />
+        android:scaleType="centerCrop"
+        android:visibility="invisible" />
+
+    <ProgressBar
+        android:id="@+id/itemProgress"
+        style="?android:attr/progressBarStyleSmall"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:layout_gravity="center"
+        android:visibility="gone" />
 
 </FrameLayout>

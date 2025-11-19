@@ -1,16 +1,17 @@
 package com.klipy.klipy_ui
 
+import android.content.Context
 import android.content.DialogInterface
 import android.os.Bundle
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
+import android.view.*
+import android.view.inputmethod.EditorInfo
+import android.view.inputmethod.InputMethodManager
 import androidx.core.os.bundleOf
-import androidx.core.widget.doOnTextChanged
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.cortlandwalker.klipy_ui.databinding.FragmentKlipyPickerBinding
+import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.google.android.material.tabs.TabLayout
 import com.klipy.sdk.model.MediaData
@@ -18,7 +19,6 @@ import com.klipy.sdk.model.MediaItem
 import com.klipy.sdk.model.MediaType
 import com.klipy.sdk.model.singularName
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class KlipyPickerDialogFragment : BottomSheetDialogFragment() {
@@ -45,18 +45,42 @@ class KlipyPickerDialogFragment : BottomSheetDialogFragment() {
 
     private var currentType: MediaType? = null
     private var currentSearchTerm: String? = null
-    private var loadJob: Job? = null
 
     // Paging state
     private val currentItems = mutableListOf<MediaItem>()
     private var isLoading = false
     private var hasMore = true
+    private var loadJob: Job? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         @Suppress("DEPRECATION")
         config = requireArguments().getParcelable(ARG_CONFIG)
-            ?: error("KlipyPickerConfig missing")
+            ?: KlipyPickerConfig()
+    }
+
+    override fun onStart() {
+        super.onStart()
+
+        // Make the bottom sheet take ~90% of screen height and expand
+        val dialog = dialog ?: return
+        val bottomSheet =
+            dialog.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)
+                ?: return
+
+        bottomSheet.post {
+            val behavior = BottomSheetBehavior.from(bottomSheet)
+
+            val displayMetrics = resources.displayMetrics
+            val targetHeight = (displayMetrics.heightPixels * 0.9f).toInt()
+
+            bottomSheet.layoutParams.height = targetHeight
+            bottomSheet.requestLayout()
+
+            behavior.state = BottomSheetBehavior.STATE_EXPANDED
+            behavior.skipCollapsed = true
+        }
     }
 
     override fun onCreateView(
@@ -73,11 +97,14 @@ class KlipyPickerDialogFragment : BottomSheetDialogFragment() {
         setupRecycler()
         setupSearch()
 
-        // initial load
+        // Set initial media type but do NOT auto-load
         val initialType = config.initialMediaType
             .takeIf { it in config.mediaTypes }
             ?: config.mediaTypes.first()
-        selectMediaType(initialType)
+        currentType = initialType
+        binding.tabMediaTypes.getTabAt(config.mediaTypes.indexOf(initialType))?.select()
+
+        clearItems()
     }
 
     override fun onDestroyView() {
@@ -89,8 +116,6 @@ class KlipyPickerDialogFragment : BottomSheetDialogFragment() {
         super.onDismiss(dialog)
         listener?.onDismissed(currentType)
     }
-
-    // region UI setup
 
     private fun setupTabs() {
         val tabLayout = binding.tabMediaTypes
@@ -105,10 +130,8 @@ class KlipyPickerDialogFragment : BottomSheetDialogFragment() {
                 selectMediaType(type)
             }
 
-            override fun onTabUnselected(tab: TabLayout.Tab?) {}
-            override fun onTabReselected(tab: TabLayout.Tab?) {
-                // optional: scroll to top or refresh
-            }
+            override fun onTabUnselected(tab: TabLayout.Tab?) = Unit
+            override fun onTabReselected(tab: TabLayout.Tab?) = Unit
         })
     }
 
@@ -119,17 +142,16 @@ class KlipyPickerDialogFragment : BottomSheetDialogFragment() {
             this.layoutManager = layoutManager
             adapter = this@KlipyPickerDialogFragment.adapter
 
-            // Paging on scroll
             addOnScrollListener(object : RecyclerView.OnScrollListener() {
                 override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
                     super.onScrolled(recyclerView, dx, dy)
-                    if (dy <= 0) return // only when scrolling down
+                    if (dy <= 0) return
 
                     val visibleItemCount = layoutManager.childCount
                     val totalItemCount = layoutManager.itemCount
                     val firstVisibleItemPosition = layoutManager.findFirstVisibleItemPosition()
+                    val threshold = 6
 
-                    val threshold = 6 // how early to start loading more
                     val shouldLoadMore =
                         !isLoading &&
                                 hasMore &&
@@ -145,89 +167,89 @@ class KlipyPickerDialogFragment : BottomSheetDialogFragment() {
     }
 
     private fun setupSearch() {
-        binding.inputSearch.doOnTextChanged { text, _, _, _ ->
-            val term = text?.toString()?.trim().orEmpty()
-            currentSearchTerm = term.ifBlank { null }
+        val edit = binding.inputSearch
 
-            listener?.didSearchTerm(term)
+        edit.setOnEditorActionListener { v, actionId, _ ->
+            if (actionId == EditorInfo.IME_ACTION_SEARCH ||
+                actionId == EditorInfo.IME_NULL
+            ) {
+                val term = v.text?.toString()?.trim().orEmpty()
+                val newTerm = term.takeIf { it.isNotEmpty() }
 
-            debounceInitialLoad()
+                currentSearchTerm = newTerm
+                newTerm?.let { listener?.didSearchTerm(it) }
+
+                // Hide keyboard
+                val imm = requireContext()
+                    .getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+                imm.hideSoftInputFromWindow(v.windowToken, 0)
+
+                startNewSearch()
+                true
+            } else {
+                false
+            }
         }
     }
 
-    // endregion
-
-    // region Paging / loading
-
-    private fun debounceInitialLoad() {
-        loadJob?.cancel()
-        loadJob = viewLifecycleOwner.lifecycleScope.launch {
-            delay(250) // simple debounce
-            loadFirstPage()
-        }
+    /** Clear items and reset paging flags without network call. */
+    private fun clearItems() {
+        currentItems.clear()
+        adapter.submitList(currentItems.toList())
+        hasMore = false
+        isLoading = false
+        binding.progressLoading.visibility = View.GONE
     }
 
     private fun selectMediaType(type: MediaType) {
         if (type == currentType) return
         currentType = type
-
-        // Explicitly reset repository paging for this type
         repo.reset(type)
 
-        // Reset local paging state
-        currentItems.clear()
-        adapter.submitList(currentItems.toList())
-        hasMore = true
-
-        loadFirstPage()
+        // Only trigger network if we have a search term
+        if (!currentSearchTerm.isNullOrBlank()) {
+            startNewSearch()
+        } else {
+            clearItems()
+        }
     }
 
-    private fun loadFirstPage() {
-        val type = currentType ?: return
+    private fun startNewSearch() {
+        val term = currentSearchTerm
 
-        // reset local list & flags
-        isLoading = false
+        if (term.isNullOrBlank()) {
+            clearItems()
+            return
+        }
+
+        // Reset paging state
         hasMore = true
+        isLoading = false
         currentItems.clear()
         adapter.submitList(currentItems.toList())
 
-        // let repository reset for new filter automatically
         loadPage(reset = true)
     }
 
     private fun loadNextPage() {
-        val type = currentType ?: return
         if (!hasMore || isLoading) return
-
         loadPage(reset = false)
     }
 
-    /**
-     * Core loading function.
-     * - If [reset] = true: clears items, treats response as first page.
-     * - If [reset] = false: appends to existing list (next pages).
-     */
     private fun loadPage(reset: Boolean) {
         val type = currentType ?: return
-
-        val filter = when {
-            currentSearchTerm.isNullOrBlank() && config.showTrending -> "trending"
-            currentSearchTerm.isNullOrBlank() && config.showRecents -> "recent"
-            currentSearchTerm.isNullOrBlank() -> "trending"
-            else -> currentSearchTerm!!
-        }
+        val term = currentSearchTerm ?: return
 
         if (isLoading) return
         isLoading = true
 
-        // optional simple shimmer/visibility
         if (reset) {
-            binding.recyclerMedia.visibility = View.INVISIBLE
-            binding.recyclerMedia.alpha = 0f
+            binding.progressLoading.visibility = View.VISIBLE
         }
 
-        viewLifecycleOwner.lifecycleScope.launch {
-            val result: Result<MediaData> = repo.getMedia(type, filter)
+        loadJob?.cancel()
+        loadJob = viewLifecycleOwner.lifecycleScope.launch {
+            val result: Result<MediaData> = repo.getMedia(type, term)
 
             result
                 .onSuccess { data ->
@@ -238,7 +260,6 @@ class KlipyPickerDialogFragment : BottomSheetDialogFragment() {
                     }
 
                     if (pageItems.isEmpty()) {
-                        // No more data from SDK; prevent further calls
                         hasMore = false
                     } else {
                         currentItems.addAll(pageItems)
@@ -246,6 +267,7 @@ class KlipyPickerDialogFragment : BottomSheetDialogFragment() {
 
                     adapter.submitList(currentItems.toList())
 
+                    binding.progressLoading.visibility = View.GONE
                     binding.recyclerMedia.visibility = View.VISIBLE
                     if (reset) {
                         binding.recyclerMedia.animate()
@@ -255,15 +277,14 @@ class KlipyPickerDialogFragment : BottomSheetDialogFragment() {
                     }
                 }
                 .onFailure {
-                    // on error: stop infinite retry
                     hasMore = false
+                    binding.progressLoading.visibility = View.GONE
+                    binding.recyclerMedia.visibility = View.VISIBLE
                 }
 
             isLoading = false
         }
     }
-
-    // endregion
 
     private fun onItemClicked(item: MediaItem) {
         listener?.onMediaSelected(item, currentSearchTerm)
