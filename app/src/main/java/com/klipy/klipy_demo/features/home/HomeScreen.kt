@@ -14,6 +14,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.klipy.klipy_demo.features.home.ui.SelectedMediaPreview
 import com.klipy.sdk.model.singularName
 
 @Composable
@@ -54,6 +55,10 @@ fun HomeScreen(
                 text = item.title ?: item.mediaType.singularName(),
                 style = MaterialTheme.typography.bodyLarge
             )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            SelectedMediaPreview(item)
         }
 
         state.lastSearchTerm

@@ -49,6 +49,7 @@ dependencies {
     implementation(project(":klipy-ui"))
 
     implementation("com.github.Cortlandd:Ghettoxide:1.0.1")
+    implementation("com.github.bumptech.glide:glide:5.0.5")
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
