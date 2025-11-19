@@ -1,6 +1,6 @@
 # Klipy Android SDK
 
-[![License](https://img.shields.io/cocoapods/l/SwiftChess.svg?style=flat)](http://github.com/Cortlandd/klipy-android-sdk/blob/main/LICENSE.md)
+[![License](https://img.shields.io/cocoapods/l/SwiftChess.svg?style=flat)](https://github.com/Cortlandd/klipy-android-sdk/blob/master/LICENSE.md)
 
 An Android SDK wrapping the [Klipy](https://klipy.com) GIF / Clips / Stickers API.
 
