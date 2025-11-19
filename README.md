@@ -1,3 +1,5 @@
+![](logo/android-klipy.png)
+
 # Klipy Android SDK
 
 [![License](https://img.shields.io/cocoapods/l/SwiftChess.svg?style=flat)](https://github.com/Cortlandd/klipy-android-sdk/blob/master/LICENSE.md)
@@ -22,8 +24,8 @@ dependencyResolutionManagement {
 ```kotlin
 // app/build.gradle.kts
 dependencies {
-    implementation("com.github.Cortlandd.klipy-android-sdk:klipy:1.0.0")
-    implementation("com.github.Cortlandd.klipy-android-sdk:klipy-ui:1.0.0") // If you want to use the picker fragment
+    implementation("com.github.Cortlandd:klipy-android-sdk:klipy:1.0.0")
+    implementation("com.github.Cortlandd:klipy-android-sdk:klipy-ui:1.0.0") // If you want to use the picker fragment
 }
 ```
 
