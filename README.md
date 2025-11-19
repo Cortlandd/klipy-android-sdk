@@ -23,6 +23,7 @@ dependencyResolutionManagement {
 // app/build.gradle.kts
 dependencies {
     implementation("com.github.Cortlandd.klipy-android-sdk:klipy:1.0.0")
+    implementation("com.github.Cortlandd.klipy-android-sdk:klipy-ui:1.0.0") // If you want to use the picker fragment
 }
 ```
 
