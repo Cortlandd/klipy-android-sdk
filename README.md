@@ -19,7 +19,7 @@ dependencyResolutionManagement {
 ```
 
 2. Add the dependency (replace 0.1.0 with the latest tag):
-```
+```kotlin
 // app/build.gradle.kts
 dependencies {
     implementation("com.github.Cortlandd.klipy-android-sdk:klipy:1.0.0")
