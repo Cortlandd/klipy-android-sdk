@@ -29,7 +29,7 @@ dependencies {
 ## Basic Usage
 
 Application
-```
+```kotlin
 class MyApp : Application() {
 
     lateinit var klipyRepository: KlipyRepository
@@ -49,7 +49,7 @@ class MyApp : Application() {
 ```
 
 In a ViewModel, you can inject / grab the repository:
-```
+```kotlin
 class GifViewModel(
     private val repo: KlipyRepository
 ) : ViewModel() {
@@ -98,7 +98,7 @@ class GifViewModel(
 
 To report or hide items:
 
-```
+```kotlin
 viewModelScope.launch {
     repo.report(MediaType.GIF, slug = "some-slug", reason = "Inappropriate")
     repo.hideFromRecent(MediaType.GIF, slug = "some-slug")
@@ -106,7 +106,7 @@ viewModelScope.launch {
 ```
 
 To trigger analytics events:
-```
+```kotlin
 viewModelScope.launch {
     repo.triggerShare(MediaType.CLIP, slug = "clip-slug")
     repo.triggerView(MediaType.CLIP, slug = "clip-slug")
