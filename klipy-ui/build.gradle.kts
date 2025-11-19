@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
+    id("kotlin-parcelize")
 }
 
 android {
@@ -37,10 +38,10 @@ android {
 
 dependencies {
 
-    implementation(project(":klipy"))
+    api(project(":klipy"))
 
-    implementation("androidx.appcompat:appcompat:1.7.0")
-    implementation("com.google.android.material:material:1.12.0")
+    api("androidx.appcompat:appcompat:1.7.0")
+    api("com.google.android.material:material:1.12.0")
     implementation("androidx.recyclerview:recyclerview:1.3.2")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.6")
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.6")
