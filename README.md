@@ -42,20 +42,16 @@ dependencies {
 
 Application
 ```kotlin
-class MyApp : Application() {
-
-    lateinit var klipyRepository: KlipyRepository
-        private set
-
+class App : Application() {
     override fun onCreate() {
         super.onCreate()
-
-        klipyRepository = KlipySdk.create(
+        val repo = KlipySdk.create(
             context = this,
-            secretKey = BuildConfig.KLIPY_SECRET_KEY, // or from remote config
-            baseApiUrl = "https://api.klipy.com/api/v1/", // already default
-            enableLogging = BuildConfig.DEBUG
+            secretKey = "",
+            enableLogging = true
         )
+
+        KlipyUi.configure(repo)
     }
 }
 ```
