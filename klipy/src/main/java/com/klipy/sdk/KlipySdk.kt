@@ -47,6 +47,7 @@ object KlipySdk {
 
         val clientBuilder = OkHttpClient.Builder()
             .addInterceptor(adsInterceptor)
+            .addInterceptor(AdDimensionSanitizerInterceptor())
             .readTimeout(30, TimeUnit.SECONDS)
             .connectTimeout(30, TimeUnit.SECONDS)
 

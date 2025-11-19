@@ -143,6 +143,7 @@ class AdsQueryParametersInterceptor(
 
         val originalUrl = originalRequest.url
         val builder = originalUrl.newBuilder()
+            // TODO: This may need to change?
             // Unique user id in the app; demo uses device ID.
             .addQueryParameter(CUSTOMER_ID, deviceInfoProvider.getDeviceId())
             .addQueryParameter(LOCALE, Locale.getDefault().language)
