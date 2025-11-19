@@ -1,3 +1,5 @@
+# TECHNICALLY ITS READY FOR USE AS INDICATED BY THE SAMPLE BUT NOT PUBLISHED YET
+
 ![](logo/android-klipy.png)
 
 # Klipy Android SDK
