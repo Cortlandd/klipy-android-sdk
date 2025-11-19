@@ -18,7 +18,7 @@ dependencyResolutionManagement {
 }
 ```
 
-2. Add the dependency (replace 0.1.0 with the latest tag):
+2. Add the dependency with latest version:
 ```kotlin
 // app/build.gradle.kts
 dependencies {
