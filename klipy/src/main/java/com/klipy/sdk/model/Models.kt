@@ -79,4 +79,4 @@ data class MetaData(
     val height: Int
 )
 
-fun MediaItem.isAd(): Boolean = mediaType == MediaType.AD
+fun MediaItem.isAD(): Boolean = mediaType == MediaType.AD

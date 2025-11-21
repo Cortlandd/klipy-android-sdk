@@ -3,11 +3,10 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     id("org.jetbrains.kotlin.plugin.serialization") version "2.0.0"
+    id("kotlin-parcelize")
 
     // For ksp and ROOM
     id("com.google.devtools.ksp") version "2.0.21-1.0.27"
-
-    id("com.google.dagger.hilt.android") version "2.57.2"
     id("androidx.navigation.safeargs.kotlin") version "2.9.5"
 }
 
@@ -35,10 +34,6 @@ android {
         }
     }
 
-    hilt {
-        enableAggregatingTask = false
-    }
-
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
@@ -49,9 +44,6 @@ android {
     buildFeatures {
         compose = true
         viewBinding = true
-    }
-    configurations.all {
-        exclude(group = "xpp3", module = "xpp3")
     }
 }
 
@@ -65,6 +57,8 @@ dependencies {
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
+    implementation(libs.androidx.media3.exoplayer)
+    implementation(libs.androidx.media3.ui)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -75,8 +69,9 @@ dependencies {
 
     implementation(project(":klipy-ui"))
 
-    implementation("com.github.Cortlandd:Ghettoxide:1.0.2")
-    implementation("com.github.bumptech.glide:glide:5.0.5")
+    implementation("com.github.Cortlandd:Ghettoxide:1.0.4")
+    implementation("androidx.compose.material:material-icons-core:1.7.8")
+    implementation("androidx.compose.material:material-icons-extended-android:1.7.8")
 
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.lifecycle.runtime.compose)
@@ -91,8 +86,10 @@ dependencies {
     androidTestImplementation(libs.androidx.navigation.testing)
 
     // Image loading
-    implementation(libs.coil.compose)
+    implementation(libs.coil.core)
     implementation(libs.coil.gif)
+    implementation(libs.coil.compose)
+    implementation("com.github.bumptech.glide:glide:5.0.5")
 
     // AppCompat
     implementation(libs.androidx.appcompat)
@@ -101,19 +98,10 @@ dependencies {
     // Coroutines
     implementation(libs.kotlinx.coroutines.android)
 
-    // Room
-    implementation(libs.androidx.room.runtime)
-    implementation(libs.androidx.room.ktx)
-    ksp(libs.androidx.room.compiler)
-
     // Hilt
     implementation(libs.hilt.android)
     ksp(libs.hilt.android.compiler)
     implementation(libs.androidx.hilt.navigation.fragment)
-}
 
-ksp {
-    arg("room.schemaLocation", "${projectDir}/schemas")
-    arg("room.incremental", "true")
-    arg("room.generateKotlin", "true")
+    implementation(libs.kikliko)
 }

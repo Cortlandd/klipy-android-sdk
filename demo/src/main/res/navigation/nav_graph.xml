@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/conversationListFragment">
+
+    <fragment
+        android:id="@+id/conversationListFragment"
+        android:name="com.klipy.conversationdemo.features.conversationlist.ConversationListFragment"
+        android:label="ConversationListFragment" >
+        <action
+            android:id="@+id/action_conversationListFragment_to_conversationFragment"
+            app:destination="@id/conversationFragment"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right"/>
+    </fragment>
+
+    <fragment
+        android:id="@+id/conversationFragment"
+        android:name="com.klipy.conversationdemo.features.conversation.ConversationFragment"
+        android:label="ConversationFragment" >
+        <argument
+            android:name="conversationId"
+            app:argType="string"
+            app:nullable="true" />
+        <action
+            android:id="@+id/action_conversationFragment_to_mediaItemPreviewFragment"
+            app:destination="@id/mediaItemPreviewFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/mediaItemPreviewFragment"
+        android:name="com.klipy.conversationdemo.features.mediaitempreview.MediaItemPreviewFragment"
+        android:label="MediaItemPreviewFragment" >
+        <argument
+            android:name="mediaItem"
+            app:argType="com.klipy.conversationdemo.features.mediaitempreview.model.MediaItemNavArg" />
+    </fragment>
+
+</navigation>

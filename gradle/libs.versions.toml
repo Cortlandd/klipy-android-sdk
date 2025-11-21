@@ -14,7 +14,7 @@ navigation = "2.9.5"
 lifecycle = "2.8.6"
 kotlinxSerializationJson = "1.7.3"
 retrofitKotlinxSerialization = "1.0.0"
-coil = "2.7.0"
+coil = "2.6.0"
 coroutines = "1.8.1"
 room = "2.6.1"
 hilt = "2.57.2"
@@ -22,6 +22,8 @@ hiltNavFragment = "1.3.0"
 appcompat = "1.7.0"
 giphyUi = "2.3.18"
 material = "1.13.0"
+media3Exoplayer = "1.8.0"
+media3Ui = "1.8.0"
 
 [libraries]
 # Core / test
@@ -80,12 +82,18 @@ androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version
 androidx-appcompat-resources = { group = "androidx.appcompat", name = "appcompat-resources", version.ref = "appcompat" }
 
 # Image loading
+coil-core = { group = "io.coil-kt", name = "coil", version.ref = "coil" }
 coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coil" }
 coil-gif = { group = "io.coil-kt", name = "coil-gif", version.ref = "coil" }
 
 # Giphy
 giphy-ui = { group = "com.giphy.sdk", name = "ui", version.ref = "giphyUi" }
+
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
+androidx-media3-exoplayer = { group = "androidx.media3", name = "media3-exoplayer", version.ref = "media3Exoplayer" }
+androidx-media3-ui = { group = "androidx.media3", name = "media3-ui", version.ref = "media3Ui" }
+
+kikliko = { group = "com.gitlab.kikliko", name = "ads-android", version = "1.0.0" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
