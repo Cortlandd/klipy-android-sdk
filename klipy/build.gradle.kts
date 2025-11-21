@@ -10,7 +10,6 @@ android {
 
     defaultConfig {
         minSdk = 24
-        targetSdk = 36
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -40,6 +39,10 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+    androidTestImplementation("com.google.android.material:material:1.12.0")
+
+    // Expose Material to SDK consumers
+    api("com.google.android.material:material:1.12.0")
 
     // Retrofit + OkHttp + Gson
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
