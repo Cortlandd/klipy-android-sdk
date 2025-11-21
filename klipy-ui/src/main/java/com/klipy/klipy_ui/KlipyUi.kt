@@ -11,6 +11,6 @@ object KlipyUi {
         repository = repo
     }
 
-    internal fun requireRepository(): KlipyRepository =
+    fun requireRepository(): KlipyRepository =
         repository ?: error("KlipyUi.configure(repo) must be called before using Klipy picker")
 }
