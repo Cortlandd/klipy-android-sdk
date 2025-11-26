@@ -6,13 +6,11 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.ComposeView
-import com.cortlandwalker.ghettoxide.Reducer
 import com.cortlandwalker.ghettoxide.ReducerFragment
-import com.klipy.klipy_ui.KlipyPickerConfig
-import com.klipy.klipy_ui.KlipyPickerDialogFragment
-import com.klipy.klipy_ui.KlipyPickerListener
+import com.klipy.klipy_ui.picker.KlipyPickerConfig
+import com.klipy.klipy_ui.picker.KlipyPickerDialogFragment
+import com.klipy.klipy_ui.picker.KlipyPickerListener
 import com.klipy.sdk.model.MediaItem
 import com.klipy.sdk.model.MediaType
 

@@ -1,4 +1,4 @@
-package com.klipy.klipy_ui
+package com.klipy.klipy_ui.picker
 
 import com.klipy.sdk.model.MediaItem
 import com.klipy.sdk.model.MediaType

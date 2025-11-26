@@ -1,6 +1,5 @@
 package com.klipy.klipy_demo.features.home
 
-import com.klipy.klipy_ui.KlipyMediaAdapter
 import com.klipy.sdk.model.MediaItem
 
 

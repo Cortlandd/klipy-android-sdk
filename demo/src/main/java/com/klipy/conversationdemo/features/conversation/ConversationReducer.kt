@@ -36,24 +36,15 @@ class ConversationReducer(
     override suspend fun process(action: ConversationAction) {
         when (action) {
             ConversationAction.Back -> emit(Back)
+
             is ConversationAction.PickerToggleClicked -> {
                 state { it.copy(isPickerVisible = !it.isPickerVisible) }
             }
-            ConversationAction.ScreenStarted -> {
-                // Just initialise local state. No network yet.
-                val mediaTypes = listOf(MediaType.GIF, MediaType.STICKER, MediaType.CLIP)
 
-                state {
-                    it.copy(
-                        title = it.title ?: "Conversation $conversationId",
-                        mediaTypes = mediaTypes,
-                        chosenMediaType = it.chosenMediaType ?: mediaTypes.first(),
-                        isLoading = false,
-                        // categories & mediaItems start empty
-                        categories = emptyList(),
-                        chosenCategory = null,
-                        mediaItems = emptyList()
-                    )
+            ConversationAction.ScreenStarted -> {
+                if (!didStart) {
+                    didStart = true
+                    loadInitial()
                 }
             }
 
@@ -80,12 +71,33 @@ class ConversationReducer(
 
             is ConversationAction.SearchInputChanged -> {
                 val query = action.query.trim()
+
+                // If search is cleared, fall back to Trending for the current media type
                 if (query.isEmpty()) {
-                    state { it.copy(lastSearchedInput = "", mediaItems = emptyList()) }
+                    val mediaType = currentState.chosenMediaType
+                        ?: currentState.mediaTypes.firstOrNull()
+                        ?: MediaType.GIF
+
+                    selectedMediaType = mediaType
+                    currentFilter = "trending"
+                    canLoadMore = true
+                    lastSubmittedSearch = null
+                    searchJob?.cancel()
+
+                    state {
+                        it.copy(
+                            searchInput = "",
+                            lastSearchedInput = "",
+                            isLoading = true,
+                            mediaItems = emptyList()
+                        )
+                    }
+
+                    fetchMediaPage(reset = true)
                     return
                 }
 
-                // snapshot current type once
+                // Regular search (non-empty)
                 val mediaType = currentState.chosenMediaType
                     ?: currentState.mediaTypes.firstOrNull()
                     ?: MediaType.GIF
@@ -93,12 +105,14 @@ class ConversationReducer(
                 // update UI to “searching…”
                 state {
                     it.copy(
+                        searchInput = query,
                         lastSearchedInput = query,
                         isLoading = true,
                         mediaItems = emptyList()
                     )
                 }
 
+                // Direct search (single-page for now)
                 val result = repo.getMedia(mediaType, query)
 
                 result
@@ -148,6 +162,7 @@ class ConversationReducer(
                         width = width,
                         height = height
                     )
+
                     MediaType.CLIP -> ClipMessage(
                         id = nextId.toString(),
                         url = item.highQualityMetaData?.url
@@ -157,6 +172,7 @@ class ConversationReducer(
                         width = width,
                         height = height
                     )
+
                     else -> GifMessage(
                         id = nextId.toString(),
                         url = item.highQualityMetaData?.url
@@ -179,9 +195,9 @@ class ConversationReducer(
         }
     }
 
-    // region initial load
-
     private fun loadInitial() {
+        // 1) Media types (GIF / STICKER / CLIP / MEME) – keyboard wants all available
+        val mediaTypes = listOf(MediaType.GIF, MediaType.STICKER, MediaType.CLIP, MediaType.MEME)
         state {
             ConversationState(
                 conversationId = conversationId,
@@ -189,7 +205,7 @@ class ConversationReducer(
                 messages = it.messages,
                 messageText = "",
                 isLoading = true,
-                mediaTypes = emptyList(),
+                mediaTypes = mediaTypes,
                 chosenMediaType = null,
                 categories = emptyList(),
                 chosenCategory = null,
@@ -201,8 +217,6 @@ class ConversationReducer(
 
         scope.launch {
             try {
-                // 1) Media types (GIF / STICKER / CLIP)
-                val mediaTypes = repo.getAvailableMediaTypes()
                 val firstType = mediaTypes.firstOrNull()
 
                 selectedMediaType = firstType
@@ -224,35 +238,49 @@ class ConversationReducer(
                     return@launch
                 }
 
-                // 2) Categories for that type
+                // 2) Trending is our default filter – no need to ask categories first
+                currentFilter = "trending"
+                lastSubmittedSearch = null
+                canLoadMore = true
+
+                // Fetch trending immediately so the tray isn't empty
+                val mediaResult = repo.getMedia(firstType, currentFilter)
+                mediaResult
+                    .onSuccess { page ->
+                        state { s ->
+                            s.copy(
+                                isLoading = false,
+                                mediaItems = page.mediaItems
+                            )
+                        }
+                        canLoadMore = page.mediaItems.isNotEmpty()
+                    }
+                    .onFailure { error ->
+                        state { it.copy(isLoading = false) }
+                        emit(
+                            ShowError(
+                                error.message ?: "Failed to load Klipy media."
+                            )
+                        )
+                    }
+
+                // 3) Categories for that type (optional, don't gate Trending)
                 val categoriesResult = repo.getCategories(firstType)
                 categoriesResult
                     .onSuccess { categories ->
                         val trending = categories.firstOrNull {
                             it.title.equals("trending", ignoreCase = true)
                         }
-                        val chosenCategory = trending ?: categories.firstOrNull()
-                        val filter = chosenCategory?.title ?: ""
-
-                        currentFilter = filter
-                        canLoadMore = true
-                        lastSubmittedSearch = filter.ifBlank { null }
 
                         state { s ->
                             s.copy(
-                                isLoading = true,
                                 categories = categories,
-                                chosenCategory = chosenCategory,
-                                searchInput = "",
-                                lastSearchedInput = filter.ifBlank { null },
-                                mediaItems = emptyList()
+                                chosenCategory = trending
                             )
                         }
-
-                        fetchMediaPage(reset = true)
                     }
                     .onFailure { error ->
-                        state { it.copy(isLoading = false, categories = emptyList()) }
+                        // Categories are non-critical; just surface an error message if you want
                         emit(
                             ShowError(
                                 error.message ?: "Failed to load Klipy categories."
@@ -269,10 +297,6 @@ class ConversationReducer(
             }
         }
     }
-
-    // endregion
-
-    // region actions
 
     private fun onSendClicked() {
         state { current ->
@@ -295,7 +319,7 @@ class ConversationReducer(
         if (type == selectedMediaType) return
 
         selectedMediaType = type
-        currentFilter = ""
+        currentFilter = "trending"
         canLoadMore = true
         lastSubmittedSearch = null
         searchJob?.cancel()
@@ -313,34 +337,42 @@ class ConversationReducer(
         }
 
         scope.launch {
-            val result = repo.getCategories(type)
-            result
+            // 1) Load trending immediately for this type
+            val mediaResult = repo.getMedia(type, currentFilter)
+            mediaResult
+                .onSuccess { page ->
+                    state { s ->
+                        s.copy(
+                            isLoading = false,
+                            mediaItems = page.mediaItems
+                        )
+                    }
+                    canLoadMore = page.mediaItems.isNotEmpty()
+                }
+                .onFailure { error ->
+                    state { it.copy(isLoading = false) }
+                    emit(
+                        ShowError(
+                            error.message ?: "Failed to load media."
+                        )
+                    )
+                }
+
+            // 2) Load categories in the background (optional)
+            val categoriesResult = repo.getCategories(type)
+            categoriesResult
                 .onSuccess { categories ->
                     val trending = categories.firstOrNull {
                         it.title.equals("trending", ignoreCase = true)
                     }
-                    val chosenCategory = trending ?: categories.firstOrNull()
-                    val filter = chosenCategory?.title ?: ""
-
-                    currentFilter = filter
-                    canLoadMore = true
-                    lastSubmittedSearch = filter.ifBlank { null }
-
                     state { s ->
                         s.copy(
-                            isLoading = true,
                             categories = categories,
-                            chosenCategory = chosenCategory,
-                            searchInput = "",
-                            lastSearchedInput = filter.ifBlank { null },
-                            mediaItems = emptyList()
+                            chosenCategory = trending
                         )
                     }
-
-                    fetchMediaPage(reset = true)
                 }
                 .onFailure { error ->
-                    state { it.copy(isLoading = false) }
                     emit(
                         ShowError(
                             error.message ?: "Failed to load categories."
@@ -351,7 +383,7 @@ class ConversationReducer(
     }
 
     private fun onCategorySelected(category: Category?) {
-        // If null, just clear to an empty filter and let the user search.
+        // If null, just clear to an empty filter and let the user search / fall back to trending via SearchInputChanged
         searchJob?.cancel()
         lastSubmittedSearch = category?.title
         currentFilter = category?.title ?: ""
@@ -373,10 +405,6 @@ class ConversationReducer(
     private suspend fun onMediaItemClicked(item: MediaItem) {
         emit(OpenMediaPreview(item))
     }
-
-    // endregion
-
-    // region paging
 
     private fun fetchMediaPage(reset: Boolean) {
         val type = selectedMediaType ?: return
@@ -424,8 +452,6 @@ class ConversationReducer(
             }
         }
     }
-
-    // endregion
 }
 
 // Simple debounce helper, equivalent to the original ViewModel’s behavior.

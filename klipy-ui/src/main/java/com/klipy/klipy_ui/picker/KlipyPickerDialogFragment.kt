@@ -1,4 +1,4 @@
-package com.klipy.klipy_ui
+package com.klipy.klipy_ui.picker
 
 import android.content.Context
 import android.content.DialogInterface
@@ -11,9 +11,11 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.cortlandwalker.klipy_ui.databinding.FragmentKlipyPickerBinding
+import com.google.android.material.R
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.google.android.material.tabs.TabLayout
+import com.klipy.klipy_ui.KlipyUi
 import com.klipy.sdk.model.MediaData
 import com.klipy.sdk.model.MediaItem
 import com.klipy.sdk.model.MediaType
@@ -66,7 +68,7 @@ class KlipyPickerDialogFragment : BottomSheetDialogFragment() {
         // Make the bottom sheet take ~90% of screen height and expand
         val dialog = dialog ?: return
         val bottomSheet =
-            dialog.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)
+            dialog.findViewById<View>(R.id.design_bottom_sheet)
                 ?: return
 
         bottomSheet.post {

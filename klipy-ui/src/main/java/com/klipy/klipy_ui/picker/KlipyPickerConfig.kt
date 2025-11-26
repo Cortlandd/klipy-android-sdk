@@ -1,4 +1,4 @@
-package com.klipy.klipy_ui
+package com.klipy.klipy_ui.picker
 
 import android.os.Parcelable
 import com.klipy.sdk.model.MediaType
