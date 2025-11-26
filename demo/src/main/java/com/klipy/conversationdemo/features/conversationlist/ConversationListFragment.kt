@@ -11,10 +11,9 @@ import com.cortlandwalker.ghettoxide.Reducer
 import com.cortlandwalker.ghettoxide.ReducerFragment
 
 class ConversationListFragment :
-    ReducerFragment<ConversationListState, ConversationListAction, ConversationListEffect>() {
+    ReducerFragment<ConversationListState, ConversationListAction, ConversationListEffect, ConversationListReducer>() {
 
-    override var reducer: Reducer<ConversationListState, ConversationListAction, ConversationListEffect> =
-        ConversationListReducer()
+    override var reducer: ConversationListReducer = ConversationListReducer()
     override val initialState: ConversationListState = ConversationListState()
 
     override fun onCreateView(
@@ -25,7 +24,7 @@ class ConversationListFragment :
         return ComposeView(requireContext()).apply {
             setContent {
                 val s = vm.state.collectAsState().value
-                ConversationListScreen(s, reducer as ConversationListReducer)
+                ConversationListScreen(s, reducer)
             }
         }
     }

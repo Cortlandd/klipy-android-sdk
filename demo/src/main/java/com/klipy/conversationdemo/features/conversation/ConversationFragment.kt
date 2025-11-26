@@ -17,11 +17,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.klipy.conversationdemo.features.mediaitempreview.model.MediaItemNavArg
 
 class ConversationFragment :
-    ReducerFragment<ConversationState, ConversationAction, ConversationEffect>() {
+    ReducerFragment<ConversationState, ConversationAction, ConversationEffect, ConversationReducer>() {
 
     private val args by navArgs<ConversationFragmentArgs>()
 
-    override lateinit var reducer: Reducer<ConversationState, ConversationAction, ConversationEffect>
+    override lateinit var reducer: ConversationReducer
 
     override val initialState: ConversationState by lazy {
         ConversationState.initial(args.conversationId ?: "0")
@@ -45,7 +45,7 @@ class ConversationFragment :
                 val state = vm.state.collectAsStateWithLifecycle().value
                 ConversationScreen(
                     state = state,
-                    reducer = reducer as ConversationReducer
+                    reducer = reducer
                 )
 
             }

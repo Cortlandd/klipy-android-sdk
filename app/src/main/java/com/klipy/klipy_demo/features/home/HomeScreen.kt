@@ -20,7 +20,7 @@ import com.klipy.sdk.model.singularName
 @Composable
 fun HomeScreen(
     state: HomeState,
-    dispatch: (HomeAction) -> Unit
+    reducer: HomeReducer
 ) {
     Column(
         modifier = Modifier
@@ -38,7 +38,7 @@ fun HomeScreen(
         )
 
         Button(
-            onClick = { dispatch(HomeAction.OpenPickerClicked) }
+            onClick = { reducer.postAction(HomeAction.OpenPickerClicked) }
         ) {
             Text(text = "Open Klipy Picker")
         }

@@ -9,6 +9,7 @@ enum class MediaType(val title: String) {
     GIF("GIFs"),
     CLIP("Clips"),
     STICKER("Stickers"),
+    MEME("Memes"),
     AD("Ads")
 }
 
@@ -17,6 +18,7 @@ fun MediaType.singularName(): String = when (this) {
     MediaType.GIF -> "GIF"
     MediaType.STICKER -> "Sticker"
     MediaType.CLIP -> "Clip"
+    MediaType.MEME -> "Meme"
     MediaType.AD -> "Ad"
 }
 

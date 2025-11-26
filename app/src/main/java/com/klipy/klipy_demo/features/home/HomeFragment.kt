@@ -16,8 +16,8 @@ import com.klipy.klipy_ui.KlipyPickerListener
 import com.klipy.sdk.model.MediaItem
 import com.klipy.sdk.model.MediaType
 
-class HomeFragment : ReducerFragment<HomeState, HomeAction, HomeEffect>() {
-    override val reducer: Reducer<HomeState, HomeAction, HomeEffect> = HomeReducer()
+class HomeFragment : ReducerFragment<HomeState, HomeAction, HomeEffect, HomeReducer>() {
+    override var reducer: HomeReducer = HomeReducer()
     override val initialState: HomeState = HomeState()
 
     override fun onCreateView(
@@ -30,7 +30,7 @@ class HomeFragment : ReducerFragment<HomeState, HomeAction, HomeEffect>() {
                 val s = vm.state.collectAsState().value
                 HomeScreen(
                     state = s,
-                    dispatch = vm::postAction
+                    reducer = reducer
                 )
             }
         }
@@ -51,9 +51,7 @@ class HomeFragment : ReducerFragment<HomeState, HomeAction, HomeEffect>() {
 
     private fun openKlipyPicker() {
         val config = KlipyPickerConfig(
-            // Defaults already give you GIF/STICKER/CLIP; tweak as desired
             columns = 3,
-            showRecents = true,
             showTrending = true
         )
 

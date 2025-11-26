@@ -46,19 +46,27 @@ internal class MediaItemMapperImpl : MediaItemMapper {
             }
 
             is MediaItemDto.GeneralMediaItemDto -> {
-                val (low, high) = data.file?.let { dims ->
-                    val lowFile = dims.md ?: dims.hd ?: dims.xs
-                    val highFile = dims.hd ?: dims.md ?: dims.sm
-                    lowFile to highFile
+                val (lowFile, highFile) = data.file?.let { dims ->
+                    val low = dims.md ?: dims.hd ?: dims.xs
+                    val high = dims.hd ?: dims.md ?: dims.sm
+                    low to high
                 } ?: (null to null)
+
+                val lowMetaDto = pickStaticSource(data.type, lowFile)
+                val highMetaDto = pickStaticSource(data.type, highFile)
 
                 MediaItem(
                     id = data.slug!!,
                     title = data.title,
                     placeHolder = data.placeHolder?.base64ToBitmap(),
-                    lowQualityMetaData = low?.gif?.toDomain(),
-                    highQualityMetaData = high?.gif?.toDomain(),
-                    mediaType = if (data.type == "gif") MediaType.GIF else MediaType.STICKER
+                    lowQualityMetaData = lowMetaDto?.toDomain(),
+                    highQualityMetaData = highMetaDto?.toDomain(),
+                    mediaType = when (data.type) {
+                        "gif" -> MediaType.GIF
+                        "sticker" -> MediaType.STICKER
+                        "meme" -> MediaType.MEME
+                        else -> MediaType.GIF
+                    }
                 )
             }
 
@@ -77,6 +85,20 @@ internal class MediaItemMapperImpl : MediaItemMapper {
                     mediaType = MediaType.AD
                 )
             }
+        }
+    }
+
+    private fun pickStaticSource(
+        type: String?,
+        file: FileTypesDto?
+    ): FileMetaDataDto? {
+        if (file == null) return null
+
+        return when (type) {
+            "meme" -> file.png ?: file.jpg ?: file.webp ?: file.gif
+            "sticker" -> file.gif ?: file.png ?: file.jpg ?: file.webp
+            "gif" -> file.gif ?: file.webp
+            else -> file.gif ?: file.webp ?: file.png ?: file.jpg
         }
     }
 

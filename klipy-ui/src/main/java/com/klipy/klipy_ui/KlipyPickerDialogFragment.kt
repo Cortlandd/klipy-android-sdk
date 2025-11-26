@@ -44,7 +44,7 @@ class KlipyPickerDialogFragment : BottomSheetDialogFragment() {
     private val adapter = KlipyMediaAdapter { onItemClicked(it) }
 
     private var currentType: MediaType? = null
-    private var currentSearchTerm: String? = null
+    private var currentFilter: String? = null
 
     // Paging state
     private val currentItems = mutableListOf<MediaItem>()
@@ -104,7 +104,11 @@ class KlipyPickerDialogFragment : BottomSheetDialogFragment() {
         currentType = initialType
         binding.tabMediaTypes.getTabAt(config.mediaTypes.indexOf(initialType))?.select()
 
-        clearItems()
+        when {
+            config.showTrending -> showTrending()
+            config.showRecents -> showRecents()
+            else -> clearItems()
+        }
     }
 
     override fun onDestroyView() {
@@ -176,7 +180,7 @@ class KlipyPickerDialogFragment : BottomSheetDialogFragment() {
                 val term = v.text?.toString()?.trim().orEmpty()
                 val newTerm = term.takeIf { it.isNotEmpty() }
 
-                currentSearchTerm = newTerm
+                currentFilter = newTerm
                 newTerm?.let { listener?.didSearchTerm(it) }
 
                 // Hide keyboard
@@ -207,7 +211,7 @@ class KlipyPickerDialogFragment : BottomSheetDialogFragment() {
         repo.reset(type)
 
         // Only trigger network if we have a search term
-        if (!currentSearchTerm.isNullOrBlank()) {
+        if (!currentFilter.isNullOrBlank()) {
             startNewSearch()
         } else {
             clearItems()
@@ -215,9 +219,9 @@ class KlipyPickerDialogFragment : BottomSheetDialogFragment() {
     }
 
     private fun startNewSearch() {
-        val term = currentSearchTerm
+        val filter = currentFilter
 
-        if (term.isNullOrBlank()) {
+        if (filter.isNullOrBlank()) {
             clearItems()
             return
         }
@@ -238,9 +242,14 @@ class KlipyPickerDialogFragment : BottomSheetDialogFragment() {
 
     private fun loadPage(reset: Boolean) {
         val type = currentType ?: return
-        val term = currentSearchTerm ?: return
+        val filter = currentFilter
 
-        if (isLoading) return
+        if (filter.isNullOrBlank()) {
+            clearItems()
+            return
+        }
+
+        if (isLoading || !hasMore) return
         isLoading = true
 
         if (reset) {
@@ -249,7 +258,7 @@ class KlipyPickerDialogFragment : BottomSheetDialogFragment() {
 
         loadJob?.cancel()
         loadJob = viewLifecycleOwner.lifecycleScope.launch {
-            val result: Result<MediaData> = repo.getMedia(type, term)
+            val result: Result<MediaData> = repo.getMedia(type, filter)
 
             result
                 .onSuccess { data ->
@@ -286,8 +295,20 @@ class KlipyPickerDialogFragment : BottomSheetDialogFragment() {
         }
     }
 
+    private fun showTrending() {
+        currentFilter = "trending" // maps to TRENDING in MediaDataSource
+        binding.inputSearch.setText("")
+        startNewSearch()
+    }
+
+    private fun showRecents() {
+        currentFilter = "recent" // maps to RECENT in MediaDataSource
+        binding.inputSearch.setText("")
+        startNewSearch()
+    }
+
     private fun onItemClicked(item: MediaItem) {
-        listener?.onMediaSelected(item, currentSearchTerm)
+        listener?.onMediaSelected(item, currentFilter)
         dismiss()
     }
 }

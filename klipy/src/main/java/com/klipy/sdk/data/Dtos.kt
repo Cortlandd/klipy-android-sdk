@@ -57,7 +57,11 @@ data class FileTypesDto(
     @SerializedName("webp")
     val webp: FileMetaDataDto? = null,
     @SerializedName("mp4")
-    val mp4: FileMetaDataDto? = null
+    val mp4: FileMetaDataDto? = null,
+    @SerializedName("png")
+    val png: FileMetaDataDto? = null,
+    @SerializedName("jpg")
+    val jpg: FileMetaDataDto? = null
 )
 
 data class DimensionsDto(

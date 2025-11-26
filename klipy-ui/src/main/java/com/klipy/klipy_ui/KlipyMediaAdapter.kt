@@ -1,6 +1,7 @@
 package com.klipy.klipy_ui
 
 import android.graphics.drawable.Drawable
+import android.net.Uri
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -41,7 +42,12 @@ class KlipyMediaAdapter(
         fun bind(item: MediaItem) {
             val context = binding.imageMedia.context
 
-            val meta = item.highQualityMetaData ?: item.lowQualityMetaData
+            // For clips: show GIF (selector) in the grid.
+            // For others: keep using highQuality (gif/webp) first.
+            val meta = when (item.mediaType) {
+                MediaType.CLIP -> item.lowQualityMetaData ?: item.highQualityMetaData
+                else           -> item.highQualityMetaData ?: item.lowQualityMetaData
+            }
             val url = meta?.url
 
             Log.d(

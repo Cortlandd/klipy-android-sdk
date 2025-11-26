@@ -77,16 +77,16 @@ dependencies {
 |-------------------------------------------|
 | ![SAMPLE VIDEO](samples/sample_video.mp4) |
 
-## Basic Usage
+## Quick Start
 
-Application
+1. Configure in your Application
 ```kotlin
 class App : Application() {
     override fun onCreate() {
         super.onCreate()
         val repo = KlipySdk.create(
             context = this,
-            secretKey = "",
+            secretKey = "KLIPY_API_KEY",
             enableLogging = true
         )
 
@@ -95,72 +95,53 @@ class App : Application() {
 }
 ```
 
-In a ViewModel, you can inject / grab the repository:
+2. Show the picker in a Fragment
 ```kotlin
-class GifViewModel(
-    private val repo: KlipyRepository
-) : ViewModel() {
+class ChatFragment : Fragment(R.layout.fragment_chat), KlipyPickerListener {
 
-    val state = MutableStateFlow(GifState())
+    private fun openKlipyPicker() {
+        val config = KlipyPickerConfig(
+            mediaTypes = listOf(MediaType.GIF, MediaType.STICKER, MediaType.CLIP),
+            columns = 3,
+            showRecents = true,
+            showTrending = true,
+            initialMediaType = MediaType.GIF
+        )
 
-    fun loadCategories() {
-        viewModelScope.launch {
-            repo.getCategories(MediaType.GIF)
-                .onSuccess { categories ->
-                    state.update { it.copy(categories = categories) }
-                }
-                .onFailure { error ->
-                    // handle error
-                }
+        val dialog = KlipyPickerDialogFragment.newInstance(config).apply {
+            listener = this@ChatFragment
         }
+
+        dialog.show(childFragmentManager, "klipy_picker")
     }
 
-    fun loadTrending() {
-        viewModelScope.launch {
-            repo.getMedia(MediaType.GIF, filter = "trending")
-                .onSuccess { mediaData ->
-                    state.update {
-                        it.copy(
-                            items = mediaData.mediaItems,
-                            adMaxResizePct = mediaData.adMaxResizePercentage
-                        )
-                    }
-                }
-        }
+    override fun onMediaSelected(item: MediaItem, searchTerm: String?) {
+        // Send the selected item in your chat:
+        // - item.mediaType (GIF/STICKER/CLIP/AD)
+        // - item.lowQualityMetaData / highQualityMetaData
+        // - filter out ads with item.isAD()
     }
 
-    fun search(query: String) {
-        viewModelScope.launch {
-            // Each subsequent call with same query loads next page.
-            repo.getMedia(MediaType.GIF, filter = query)
-                .onSuccess { mediaData ->
-                    state.update { old ->
-                        old.copy(items = old.items + mediaData.mediaItems)
-                    }
-                }
-        }
+    override fun onDismissed(lastContentType: MediaType?) {
+        // Optional: do something when the sheet is dismissed
+    }
+
+    override fun didSearchTerm(term: String) {
+        // Optional: observe search terms
     }
 }
 ```
 
-To report or hide items:
-
+3. Rendering media
+You decide how to render the MediaItem:
 ```kotlin
-viewModelScope.launch {
-    repo.report(MediaType.GIF, slug = "some-slug", reason = "Inappropriate")
-    repo.hideFromRecent(MediaType.GIF, slug = "some-slug")
-}
+Glide.with(imageView)
+    .asGif()
+    .load(item.highQualityMetaData?.url ?: item.lowQualityMetaData?.url)
+    .into(imageView)
 ```
 
-To trigger analytics events:
-```kotlin
-viewModelScope.launch {
-    repo.triggerShare(MediaType.CLIP, slug = "clip-slug")
-    repo.triggerView(MediaType.CLIP, slug = "clip-slug")
-}
-```
-
-## Using the UI Picker (klipy-ui)
+# Using the UI Picker (klipy-ui)
 klipy-ui ships a ready-made picker similar in spirit to Giphy’s dialog:
 - Implemented as a BottomSheetDialogFragment.
 - Supports GIFs, stickers, and clips (mp4).
@@ -201,8 +182,30 @@ You can then render the selected MediaItem however you like (e.g., Glide for GIF
 
 ---
 
+# API Surface (1.0)
+### Public core types:
+- com.klipy.sdk.KlipySdk
+- com.klipy.sdk.KlipyRepository
+- com.klipy.sdk.model.MediaType
+- com.klipy.sdk.model.MediaItem
+- com.klipy.sdk.model.Category
+- com.klipy.sdk.model.MediaData
+- fun MediaType.singularName()
+- fun MediaItem.isAD()
+### Public UI types:
+- com.klipy.klipy_ui.KlipyUi
+- com.klipy.klipy_ui.KlipyPickerConfig
+- com.klipy.klipy_ui.KlipyPickerDialogFragment
+- com.klipy.klipy_ui.KlipyPickerListener
+Everything under com.klipy.sdk.data and KlipyMediaAdapter is internal implementation detail.
+
+---
+
 You find an issue, open an issue
 
 # FAQ
-Q: gonna do ios also?
-A: probably
+Q: Do I have to use the UI module?
+A: No. You can use `KlipySdk.create(...)` + `KlipyRepository` directly and build a custom UI on top of `MediaItem`.
+
+Q: Gonna do ios also?
+A: Probably.

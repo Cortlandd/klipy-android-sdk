@@ -77,6 +77,7 @@ object KlipySdk {
         val gifService = retrofit.create(GifService::class.java)
         val stickersService = retrofit.create(StickersService::class.java)
         val clipsService = retrofit.create(ClipsService::class.java)
+        val memesService = retrofit.create(MemesService::class.java)
 
         val apiCallHelper = ApiCallHelper()
         val mapper = MediaItemMapperImpl()
@@ -84,11 +85,13 @@ object KlipySdk {
         val gifsDataSource = MediaDataSourceImpl(apiCallHelper, gifService, mapper, deviceInfoProvider)
         val stickersDataSource = MediaDataSourceImpl(apiCallHelper, stickersService, mapper, deviceInfoProvider)
         val clipsDataSource = MediaDataSourceImpl(apiCallHelper, clipsService, mapper, deviceInfoProvider)
+        val memesDataSource = MediaDataSourceImpl(apiCallHelper, memesService, mapper, deviceInfoProvider)
 
         val selector = MediaDataSourceSelectorImpl(
             gifsDataSource = gifsDataSource,
             stickersDataSource = stickersDataSource,
-            clipsDataSource = clipsDataSource
+            clipsDataSource = clipsDataSource,
+            memesDataSource = memesDataSource
         )
 
         return KlipyRepositoryImpl(selector)
@@ -103,10 +106,43 @@ private class KlipyRepositoryImpl(
 ) : KlipyRepository {
 
     override suspend fun getAvailableMediaTypes(): List<MediaType> =
-        listOf(MediaType.GIF, MediaType.STICKER, MediaType.CLIP)
+        listOf(MediaType.GIF, MediaType.STICKER, MediaType.CLIP, MediaType.MEME)
 
     override suspend fun getCategories(mediaType: MediaType): Result<List<Category>> {
         return mediaDataSourceSelector.getDataSource(mediaType).getCategories()
+    }
+
+    override suspend fun getTrending(mediaType: MediaType): Result<MediaData> {
+        return mediaDataSourceSelector
+            .getDataSource(mediaType)
+            .getMediaData("trending")
+    }
+
+    override suspend fun search(
+        mediaType: MediaType,
+        query: String
+    ): Result<MediaData> {
+        if (query.isBlank()) return Result.success(MediaData.EMPTY)
+
+        return mediaDataSourceSelector
+            .getDataSource(mediaType)
+            .getMediaData(query)
+    }
+
+    override suspend fun getRecent(mediaType: MediaType): Result<MediaData> {
+        return mediaDataSourceSelector
+            .getDataSource(mediaType)
+            .getMediaData("recent")
+    }
+
+    override suspend fun getItems(
+        mediaType: MediaType,
+        ids: List<String>,
+        slugs: List<String>
+    ): Result<MediaData> {
+        return mediaDataSourceSelector
+            .getDataSource(mediaType)
+            .getItems(ids = ids, slugs = slugs)
     }
 
     override suspend fun getMedia(

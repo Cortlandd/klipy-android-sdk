@@ -12,11 +12,11 @@ import com.cortlandwalker.ghettoxide.Reducer
 import com.cortlandwalker.ghettoxide.ReducerFragment
 import com.klipy.conversationdemo.features.mediaitempreview.model.MediaItemNavArg
 
-class MediaItemPreviewFragment : ReducerFragment<MediaItemPreviewState, MediaItemPreviewAction, MediaItemPreviewEffect>() {
+class MediaItemPreviewFragment : ReducerFragment<MediaItemPreviewState, MediaItemPreviewAction, MediaItemPreviewEffect, MediaItemPreviewReducer>() {
 
     private val args by navArgs<MediaItemPreviewFragmentArgs>()
 
-    override lateinit var reducer: Reducer<MediaItemPreviewState, MediaItemPreviewAction, MediaItemPreviewEffect>
+    override lateinit var reducer: MediaItemPreviewReducer
 
     override val initialState: MediaItemPreviewState by lazy {
         MediaItemPreviewState(args.mediaItem.toMediaItem())
@@ -37,7 +37,7 @@ class MediaItemPreviewFragment : ReducerFragment<MediaItemPreviewState, MediaIte
                 val s = vm.state.collectAsState().value
                 MediaItemPreviewScreen(
                     state = s,
-                    reducer = reducer as MediaItemPreviewReducer
+                    reducer = reducer
                 )
             }
         }

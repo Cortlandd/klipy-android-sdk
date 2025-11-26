@@ -10,6 +10,7 @@ import com.klipy.sdk.model.MediaType
 internal interface MediaDataSource {
     suspend fun getCategories(): Result<List<Category>>
     suspend fun getMediaData(filter: String): Result<MediaData>
+    suspend fun getItems(ids: List<String>, slugs: List<String>): Result<MediaData>
     suspend fun triggerShare(slug: String): Result<Any>
     suspend fun triggerView(slug: String): Result<Any>
     suspend fun report(slug: String, reason: String): Result<Any>
@@ -81,7 +82,8 @@ internal class MediaDataSourceImpl(
 
                     TRENDING -> mediaService.getTrending(
                         page = currentPage,
-                        perPage = PER_PAGE
+                        perPage = PER_PAGE,
+                        customerId = customerId
                     )
 
                     else -> mediaService.search(
@@ -105,6 +107,29 @@ internal class MediaDataSourceImpl(
             }
             .onFailure {
                 canRequestMoreData = false
+            }
+    }
+
+    override suspend fun getItems(
+        ids: List<String>,
+        slugs: List<String>
+    ): Result<MediaData> {
+        if (ids.isEmpty() && slugs.isEmpty()) return Result.success(MediaData.EMPTY)
+
+        return apiCallHelper
+            .makeApiCall {
+                mediaService.getItems(
+                    ids = ids.joinToString(","),
+                    slugs = slugs.joinToString(",")
+                )
+            }
+            .mapCatching { response ->
+                val data = response.data
+                MediaData(
+                    mediaItems = data?.data?.map(mediaItemMapper::mapToDomain) ?: emptyList(),
+                    itemMinWidth = data?.meta?.itemMinWidth ?: 0,
+                    adMaxResizePercentage = (data?.meta?.adMaxResizePercentage ?: 0) / 100f
+                )
             }
     }
 
@@ -156,7 +181,8 @@ internal interface MediaDataSourceSelector {
 internal class MediaDataSourceSelectorImpl(
     private val gifsDataSource: MediaDataSource,
     private val stickersDataSource: MediaDataSource,
-    private val clipsDataSource: MediaDataSource
+    private val clipsDataSource: MediaDataSource,
+    private val memesDataSource: MediaDataSource
 ) : MediaDataSourceSelector {
 
     private var lastMediaType: MediaType? = null
@@ -166,6 +192,7 @@ internal class MediaDataSourceSelectorImpl(
             MediaType.GIF -> gifsDataSource
             MediaType.STICKER -> stickersDataSource
             MediaType.CLIP -> clipsDataSource
+            MediaType.MEME -> memesDataSource
             MediaType.AD -> throw IllegalArgumentException("No datasource for AD type")
         }
 

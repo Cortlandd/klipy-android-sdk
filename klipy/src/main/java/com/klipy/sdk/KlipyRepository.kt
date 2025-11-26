@@ -16,6 +16,29 @@ interface KlipyRepository {
     /** Fetch available categories for a given media type (GIFs, Stickers, Clips). */
     suspend fun getCategories(mediaType: MediaType): Result<List<Category>>
 
+    /** GET {GIF|Sticker|Clip|Meme} - Trending API */
+    suspend fun getTrending(
+        mediaType: MediaType
+    ): Result<MediaData>
+
+    /** GET {GIF|Sticker|Clip|Meme} - Search API */
+    suspend fun search(
+        mediaType: MediaType,
+        query: String
+    ): Result<MediaData>
+
+    /** GET {GIF|Sticker|Clip|Meme} - Recent Items API [per user] */
+    suspend fun getRecent(
+        mediaType: MediaType
+    ): Result<MediaData>
+
+    /** GET {GIF|Sticker|Clip|Meme} - Items API (one or more items by id). */
+    suspend fun getItems(
+        mediaType: MediaType,
+        ids: List<String>,
+        slugs: List<String>
+    ): Result<MediaData>
+
     /**
      * Fetch media items for a given type and filter.
      *

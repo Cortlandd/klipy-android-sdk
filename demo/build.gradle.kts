@@ -69,7 +69,7 @@ dependencies {
 
     implementation(project(":klipy-ui"))
 
-    implementation("com.github.Cortlandd:Ghettoxide:1.0.4")
+    implementation("com.github.Cortlandd:Ghettoxide:1.0.7")
     implementation("androidx.compose.material:material-icons-core:1.7.8")
     implementation("androidx.compose.material:material-icons-extended-android:1.7.8")
 
