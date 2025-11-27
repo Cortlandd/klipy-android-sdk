@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.kotlin.compose)
     id("kotlin-parcelize")
 }
 
@@ -26,6 +27,7 @@ android {
     }
     buildFeatures {
         viewBinding = true
+        compose = true
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -40,8 +42,16 @@ dependencies {
 
     api(project(":klipy"))
 
+    // For architecture of tray
+    implementation("com.github.Cortlandd:Ghettoxide:1.0.7")
+
     api("androidx.appcompat:appcompat:1.7.0")
     api("com.google.android.material:material:1.12.0")
+
+    // Material icons
+    api("androidx.compose.material:material-icons-core:1.7.8")
+    api("androidx.compose.material:material-icons-extended-android:1.7.8")
+
     implementation("androidx.recyclerview:recyclerview:1.3.2")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.6")
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.6")
@@ -55,4 +65,17 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+
+    // Compose
+    implementation(libs.androidx.activity.compose)
+    implementation(platform(libs.androidx.compose.bom))
+    implementation(libs.androidx.compose.ui)
+    implementation(libs.androidx.compose.ui.graphics)
+    implementation(libs.androidx.compose.ui.tooling.preview)
+    implementation(libs.androidx.compose.material3)
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
+    implementation(libs.androidx.lifecycle.runtime.compose)
+    debugImplementation(libs.androidx.compose.ui.tooling)
+
+    implementation(libs.kikliko)
 }

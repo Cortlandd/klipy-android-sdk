@@ -1,9 +1,11 @@
 package com.klipy.conversationdemo.features.conversation.ui
 
+import android.widget.ImageView
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -18,212 +20,166 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.VolumeOff
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
+import com.bumptech.glide.Glide
 import com.klipy.conversationdemo.features.conversation.model.ClipMessage
 import com.klipy.conversationdemo.features.conversation.model.GifMessage
 import com.klipy.conversationdemo.features.conversation.model.MessageUiModel
 import com.klipy.conversationdemo.features.conversation.model.TextMessage
-import com.klipy.conversationdemo.ui.components.ExoPlayerView
-import com.klipy.conversationdemo.ui.components.GifImage
-import com.klipy.conversationdemo.ui.theme.VividPurple
 
 @Composable
-fun MessageList(
+fun MessagesList(
     modifier: Modifier = Modifier,
-    messageList: List<MessageUiModel>,
-    playingClip: ClipMessage?,
-    hideClips: Boolean,
-    onClipMessageClicked: (ClipMessage) -> Unit
+    messages: List<MessageUiModel>,
+    userBubble: Color,
+    klipyBubble: Color,
+    onMediaClicked: (MessageUiModel) -> Unit = {}
 ) {
     LazyColumn(
-        modifier = modifier,
-        reverseLayout = true,
-        verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.Bottom)
+        modifier = modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        item {
-            Spacer(modifier = Modifier.height(0.dp))
-        }
-        items(
-            messageList.reversed(),
-            key = { it.id }
-        ) {
-            Message(
-                isFromCurrentUser = it.isFromCurrentUser,
-                transparentBackground = it !is TextMessage
-            ) {
-                when (it) {
-                    is TextMessage -> {
-                        TextMessage(
-                            text = it.text,
-                            isMine = it.isFromCurrentUser
+        items(messages, key = { it.id }) { msg ->
+            val isUser = msg.isFromCurrentUser
+
+            when (msg) {
+                is TextMessage -> {
+                    TextMessageBubble(
+                        text = msg.text,
+                        isFromUser = isUser,
+                        userBubble = userBubble,
+                        klipyBubble = klipyBubble
+                    )
+                }
+
+                is GifMessage -> {
+                    Box(
+                        modifier = Modifier.clickable { onMediaClicked(msg) }
+                    ) {
+                        MediaMessageBubble(
+                            url = msg.url,
+                            isClip = false,
+                            isFromUser = isUser
                         )
                     }
+                }
 
-                    is GifMessage -> {
-                        GifMessage(
-                            url = it.url,
-                            ratio = it.height.toFloat() / it.width
-                        )
-                    }
-
-                    is ClipMessage -> {
-                        ClipMessage(
-                            url = it.url,
-                            ratio = it.height.toFloat() / it.width,
-                            isMuted = it != playingClip,
-                            hide = hideClips,
-                            onClick = {
-                                onClipMessageClicked.invoke(it)
-                            }
+                is ClipMessage -> {
+                    Box(
+                        modifier = Modifier.clickable { onMediaClicked(msg) }
+                    ) {
+                        MediaMessageBubble(
+                            url = msg.url,
+                            isClip = true,
+                            isFromUser = isUser
                         )
                     }
                 }
             }
         }
-        item {
-            Spacer(modifier = Modifier.height(0.dp))
-        }
     }
 }
 
 @Composable
-private fun Message(
-    modifier: Modifier = Modifier,
-    isFromCurrentUser: Boolean,
-    transparentBackground: Boolean,
-    content: @Composable () -> Unit
+private fun TextMessageBubble(
+    text: String,
+    isFromUser: Boolean,
+    userBubble: Color,
+    klipyBubble: Color
 ) {
-    Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(
-                start = if (isFromCurrentUser) 60.dp else 0.dp,
-                end = if (isFromCurrentUser) 0.dp else 60.dp
-            ),
-        contentAlignment = if (isFromCurrentUser) {
-            Alignment.CenterEnd
-        } else {
-            Alignment.CenterStart
-        }
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = if (isFromUser) Arrangement.End else Arrangement.Start
     ) {
         Box(
             modifier = Modifier
                 .clip(
                     RoundedCornerShape(
-                        topStart = 16.dp,
-                        topEnd = 16.dp,
-                        bottomStart = if (isFromCurrentUser) 16.dp else 4.dp,
-                        bottomEnd = if (isFromCurrentUser) 4.dp else 16.dp
+                        topStart = 18.dp,
+                        topEnd = 18.dp,
+                        bottomEnd = if (isFromUser) 0.dp else 18.dp,
+                        bottomStart = if (isFromUser) 18.dp else 0.dp
                     )
                 )
-                .background(
-                    color = if (transparentBackground) {
-                        Color.Transparent
-                    } else if (isFromCurrentUser) {
-                        MaterialTheme.colorScheme.primary
-                    } else {
-                        VividPurple
-                    }
-                )
-                .padding(if (transparentBackground) 0.dp else 16.dp)
+                .background(if (isFromUser) userBubble else klipyBubble)
+                .padding(horizontal = 12.dp, vertical = 8.dp)
         ) {
-            content()
-        }
-    }
-}
-
-@Composable
-private fun TextMessage(
-    modifier: Modifier = Modifier,
-    text: String,
-    isMine: Boolean
-) {
-    Text(
-        modifier = modifier,
-        text = text,
-        color = if (isMine) {
-            MaterialTheme.colorScheme.onPrimary
-        } else {
-            Color.White
-        }
-    )
-}
-
-@Composable
-private fun GifMessage(
-    modifier: Modifier = Modifier,
-    url: String,
-    ratio: Float
-) {
-    val gifWidth = 200.dp
-    GifImage(
-        modifier = modifier
-            .width(gifWidth)
-            .height(gifWidth * ratio),
-        key = url,
-        url = url,
-        contentScale = ContentScale.Crop
-    )
-}
-
-@Composable
-private fun ClipMessage(
-    modifier: Modifier = Modifier,
-    hide: Boolean,
-    url: String,
-    ratio: Float,
-    isMuted: Boolean,
-    onClick: () -> Unit
-) {
-    val clipWidth = 200.dp
-    Box(
-        modifier = modifier
-            .width(clipWidth)
-            .height(clipWidth * ratio)
-            .alpha(if (hide) 0F else 1F)
-            .clickable {
-                onClick.invoke()
-            }
-    ) {
-        ExoPlayerView(
-            modifier = Modifier.fillMaxSize(),
-            url = url,
-            isMuted = isMuted
-        )
-        Box(
-            modifier = Modifier
-                .padding(
-                    end = 10.dp,
-                    bottom = 10.dp
-                )
-                .size(24.dp)
-                .background(
-                    shape = CircleShape,
-                    color = Color.White.copy(alpha = 0.8F)
-                )
-                .align(Alignment.BottomEnd),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                modifier = Modifier.size(18.dp),
-                imageVector = if (isMuted) {
-                    Icons.AutoMirrored.Filled.VolumeOff
-                } else {
-                    Icons.AutoMirrored.Filled.VolumeUp
-                },
-                contentDescription = "",
-                tint = Color.Black
+            Text(
+                text = text,
+                color = if (isFromUser) Color.Black else Color.White,
+                style = MaterialTheme.typography.bodyMedium
             )
         }
     }
 }
+
+@Composable
+private fun MediaMessageBubble(
+    url: String,
+    isClip: Boolean,
+    isFromUser: Boolean
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = if (isFromUser) Arrangement.End else Arrangement.Start
+    ) {
+        Box(
+            modifier = Modifier
+                .width(220.dp)
+                .height(160.dp)
+                .clip(RoundedCornerShape(16.dp))
+                .background(Color.Black)
+        ) {
+            AndroidView(
+                modifier = Modifier.matchParentSize(),
+                factory = { context ->
+                    ImageView(context).apply {
+                        scaleType = ImageView.ScaleType.CENTER_CROP
+                    }
+                },
+                update = { imageView ->
+                    // GIF or clip thumbnail – both use Glide
+                    Glide.with(imageView)
+                        .asGif()
+                        .load(url)
+                        .into(imageView)
+                }
+            )
+
+            if (isClip) {
+                // Play overlay for clips
+                Box(
+                    modifier = Modifier
+                        .matchParentSize()
+                        .padding(8.dp),
+                    contentAlignment = Alignment.BottomEnd
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(32.dp)
+                            .clip(CircleShape)
+                            .background(Color(0xFF9C27FF)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.PlayArrow,
+                            contentDescription = "Play",
+                            tint = Color.Black
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+

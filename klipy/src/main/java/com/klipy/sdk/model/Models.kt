@@ -23,16 +23,21 @@ fun MediaType.singularName(): String = when (this) {
 }
 
 /**
- * Category metadata displayed in category pickers.
- * e.g. title = "love", url = preview image for that category.
+ * Category metadata returned by Klipy.
+ *
+ * @property title Human-readable label, e.g. "smile", "good morning".
+ * @property query Query string to send back to Klipy when this category is selected.
+ * @property previewUrl Optional small GIF/PNG preview for this category.
  */
 data class Category(
     val title: String,
-    val url: String
+    val query: String,
+    val previewUrl: String? = null
 )
 
 /** Convenience: is this the "recent" pseudo-category? */
-fun Category.isRecent(): Boolean = title.equals("recent", ignoreCase = true)
+fun Category.isRecent(): Boolean =
+    query.equals("recent", ignoreCase = true) || title.equals("recent", ignoreCase = true)
 
 /**
  * A page of media data.
@@ -53,7 +58,7 @@ data class MediaData(
 /**
  * A single media item that you can display or play in your app.
  *
- * - GIF/STICKER:
+ * - GIF/STICKER/MEME:
  *   - [lowQualityMetaData] is usually a small GIF/WebP.
  *   - [highQualityMetaData] is higher resolution when available.
  *

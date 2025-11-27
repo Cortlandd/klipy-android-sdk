@@ -46,10 +46,13 @@ internal class MediaDataSourceImpl(
         return apiCallHelper
             .makeApiCall { mediaService.getCategories() }
             .mapCatching { result ->
-                val list = result.data?.toMutableList()
-                list?.addAll(0, listOf(RECENT, TRENDING))
-                val mapped = (list ?: emptyList()).map { title ->
-                    Category(title = title, url = title.toCategoryUrl())
+                val list = result.data.categories.toMutableList()
+                val mapped = list.map { category ->
+                    Category(
+                        title = category.category,
+                        query = category.query,
+                        previewUrl = category.previewUrl
+                    )
                 }
                 categories = mapped
                 mapped

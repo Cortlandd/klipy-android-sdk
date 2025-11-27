@@ -10,18 +10,12 @@ import com.klipy.sdk.model.MediaType
 
 data class ConversationState(
     val conversationId: String,
-    val title: String? = null,
+    val title: String,
     val messages: List<MessageUiModel> = emptyList(),
     val messageText: String = "",
-    val isLoading: Boolean = false,
-    val mediaTypes: List<MediaType> = listOf(MediaType.GIF, MediaType.STICKER, MediaType.CLIP),
-    val chosenMediaType: MediaType? = null,
-    val categories: List<Category> = emptyList(),
-    val chosenCategory: Category? = null,
-    val mediaItems: List<MediaItem> = emptyList(),
-    val searchInput: String = "",
-    val lastSearchedInput: String? = null,
     val isPickerVisible: Boolean = false,
+    val isSending: Boolean = false,
+    val isLoadingInitial: Boolean = false
 ) {
     companion object {
         fun initial(conversationId: String?): ConversationState {
@@ -31,44 +25,31 @@ data class ConversationState(
                 title = getConversationTitle(id),
                 messages = getMockMessages(id),
                 messageText = "",
-                isLoading = false,
-                mediaTypes = listOf(MediaType.GIF, MediaType.STICKER, MediaType.CLIP),
-                chosenMediaType = null,
-                categories = emptyList(),
-                chosenCategory = null,
-                mediaItems = emptyList(),
-                lastSearchedInput = null
+                isLoadingInitial = false,
             )
         }
     }
 }
 
-sealed interface ConversationAction {
-    data object Back : ConversationAction
-    data object ScreenStarted : ConversationAction
-    data class ScreenMeasured(
-        val containerWidthDp: Int,
-        val containerHeightDp: Int,
-        val screenWidthPx: Int,
-        val screenHeightPx: Int
-    ) : ConversationAction
+sealed class ConversationAction {
+    data object ScreenStarted : ConversationAction()
+    data object Back : ConversationAction()
 
-    data class MessageTextChanged(val text: String) : ConversationAction
-    data object SendClicked : ConversationAction
+    data object PickerToggleClicked : ConversationAction()
+    data class MediaItemClicked(val item: MediaItem) : ConversationAction()
+    data class MessageTextChanged(val text: String) : ConversationAction()
+    data object SendClicked : ConversationAction()
 
-    data class MediaTypeSelected(val type: MediaType) : ConversationAction
-    data class CategorySelected(val category: Category?) : ConversationAction
-    data class SearchInputChanged(val query: String) : ConversationAction
-    data class TrayMediaSelected(val item: MediaItem) : ConversationAction
-    data class MediaItemClicked(val item: MediaItem) : ConversationAction
-    data object PickerToggleClicked : ConversationAction
-    data object RetryInitialLoad : ConversationAction
+    /**
+     * Fired when the Klipy tray (Compose or XML) reports a chosen media item.
+     */
+    data class TrayMediaSelected(val item: MediaItem) : ConversationAction()
 }
 
-sealed interface ConversationEffect {
-    data class ShowError(val message: String) : ConversationEffect
-    data class OpenMediaPreview(val item: MediaItem) : ConversationEffect
-    data object Back : ConversationEffect
+sealed class ConversationEffect {
+    data object Back : ConversationEffect()
+    data class OpenMediaPreview(val item: MediaItem) : ConversationEffect()
+    data class ShowError(val message: String) : ConversationEffect()
 }
 
 // --- Simple helpers to give each conversation a title / starter messages --- //

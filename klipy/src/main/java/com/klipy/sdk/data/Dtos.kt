@@ -4,15 +4,43 @@ import com.google.gson.JsonDeserializationContext
 import com.google.gson.JsonDeserializer
 import com.google.gson.JsonElement
 import com.google.gson.annotations.SerializedName
+import com.klipy.sdk.model.Category
 import java.lang.reflect.Type
 
 // DTOs that match Klipy’s HTTP API.
 
 data class CategoriesResponseDto(
     @SerializedName("result")
-    val result: Boolean? = null,
+    val result: Boolean,
+
     @SerializedName("data")
-    val data: List<String>? = null
+    val data: CategoriesDataDto
+)
+
+data class CategoriesDataDto(
+    @SerializedName("locale")
+    val locale: String? = null,
+
+    @SerializedName("categories")
+    val categories: List<CategoryDto> = emptyList()
+)
+
+data class CategoryDto(
+    @SerializedName("category")
+    val category: String,
+
+    @SerializedName("query")
+    val query: String,
+
+    @SerializedName("preview_url")
+    val previewUrl: String?
+)
+
+// Mapper to domain
+fun CategoryDto.toDomain(): Category = Category(
+    title = category,
+    query = query,
+    previewUrl = previewUrl
 )
 
 data class MediaItemResponseDto(

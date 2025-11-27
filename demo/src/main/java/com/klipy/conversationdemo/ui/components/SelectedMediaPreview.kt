@@ -1,5 +1,6 @@
 package com.klipy.conversationdemo.ui.components
 
+import android.R
 import android.net.Uri
 import android.widget.ImageView
 import android.widget.VideoView
@@ -24,6 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.bumptech.glide.Glide
@@ -93,9 +95,9 @@ fun SelectedMediaPreview(item: MediaItem) {
                         .clip(CircleShape)
                         .background(Color.Black.copy(alpha = 0.6f))
                 ) {
-                    val icon = if (isPlaying) Icons.Filled.Close else Icons.Filled.PlayArrow
+                    val icon = if (isPlaying) painterResource(R.drawable.ic_media_pause) else painterResource(R.drawable.ic_media_play)
                     Icon(
-                        imageVector = icon,
+                        painter = icon,
                         contentDescription = if (isPlaying) "Pause" else "Play",
                         tint = Color.White
                     )
