@@ -6,7 +6,7 @@
 
 [![License](https://img.shields.io/cocoapods/l/SwiftChess.svg?style=flat)](https://github.com/Cortlandd/klipy-android-sdk/blob/master/LICENSE.md)
 
-An Android SDK wrapping the [Klipy](https://klipy.com) GIF / Clips / Stickers API.
+An Android SDK wrapping the [Klipy](https://klipy.com) API to drop a GIF, Sticker, Clip, or Meme into your Android app with a single SDK.
 
 ---
 
@@ -17,6 +17,8 @@ The SDK and sample app are built using current Android patterns and libraries:
 - **Modular SDK**
     - `klipy`: core networking + data models (Kotlin, coroutines, Flow).
     - `klipy-ui`: optional UI module providing a ready-made picker dialog (BottomSheetDialogFragment, RecyclerView, Glide).
+    - `demo`: A sample chat app that makes use of KlipyTray to get images from keyboard.
+    - `app`: A sample to showcase the KlipyPickerDialogFragment to allow Klipy search with 1 button.
 
 - **Sample App Features**
     - **Single-Activity / Nav Graph** using **Jetpack Navigation** for screen flow.
@@ -67,8 +69,18 @@ dependencies {
     implementation("com.github.Cortlandd:klipy-android-sdk:klipy-ui:1.0.0")
 }
 ```
+Or
+```kotlin
+dependencies {
+    // Core SDK
+    implementation(project(":klipy"))
 
-## Basic Usage Sample Screenshots
+    // Optional UI layer: picker dialog, adapter, etc.
+    implementation(project(":klipy-ui"))
+}
+```
+
+## Basic Sample App Module Screenshots
 | Default State        | Search Screen          | Gif Results            | Sticker Results        | Clip Results           | Displaying selection   |
 |----------------------|------------------------|------------------------|------------------------|------------------------|------------------------|
 | ![](samples/img.png) | ![](samples/img_1.png) | ![](samples/img_2.png) | ![](samples/img_3.png) | ![](samples/img_4.png) | ![](samples/img_5.png) |
@@ -76,6 +88,12 @@ dependencies {
 | Sample Video                              |
 |-------------------------------------------|
 | ![SAMPLE VIDEO](samples/sample_video.mp4) |
+
+## Basic Sample Demo Module Screenshots
+
+| Default chat list | Display conversation | Tapping the grid icon opens KlipyTray | Gif selection displaying in conversation | Show preview of selection   |
+|----------------------|------------------------|------------------------|------------------------|------------------------|------------------------|
+| ![](samples/demo/img.png) | ![](samples/demo/img_1.png) | ![](samples/demo/img_2.png) | ![](samples/demo/img_3.png) | ![](samples/demo/img_4.png) |
 
 ## Quick Start
 

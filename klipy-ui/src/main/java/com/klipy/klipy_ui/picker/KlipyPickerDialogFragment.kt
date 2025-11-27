@@ -23,6 +23,39 @@ import com.klipy.sdk.model.singularName
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
+/**
+ * Bottom sheet dialog that shows a Klipy-powered media picker:
+ * GIFs, stickers, clips and memes.
+ *
+ * Usage:
+ *
+ * ```kotlin
+ * class ChatFragment : Fragment(), KlipyPickerListener {
+ *
+ *   private fun openKlipyPicker() {
+ *     val config = KlipyPickerConfig(
+ *       mediaTypes = listOf(MediaType.GIF, MediaType.STICKER, MediaType.CLIP, MediaType.MEME),
+ *       columns = 3,
+ *       showRecents = false,
+ *       showTrending = true,
+ *       initialMediaType = MediaType.GIF
+ *     )
+ *
+ *     KlipyPickerDialogFragment
+ *       .newInstance(config)
+ *       .also { it.listener = this }
+ *       .show(childFragmentManager, "klipy_picker")
+ *   }
+ *
+ *   override fun onMediaSelected(item: MediaItem, searchTerm: String?) {
+ *     // Do something with selection
+ *   }
+ * }
+ * ```
+ *
+ * **Important:** Before using this fragment you must configure [KlipyUi]
+ * with a [com.klipy.sdk.KlipyRepository] instance (typically in `Application.onCreate`).
+ */
 class KlipyPickerDialogFragment : BottomSheetDialogFragment() {
 
     companion object {
