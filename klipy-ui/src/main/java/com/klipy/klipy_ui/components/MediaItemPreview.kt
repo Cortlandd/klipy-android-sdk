@@ -104,6 +104,24 @@ fun MediaItemPreview(item: MediaItem) {
                 }
             }
         }
+        MediaType.GIF, MediaType.STICKER -> {
+            AndroidView(
+                modifier = Modifier
+                    .size(240.dp)
+                    .clip(RoundedCornerShape(16.dp)),
+                factory = { ctx ->
+                    ImageView(ctx).apply {
+                        scaleType = ImageView.ScaleType.CENTER_CROP
+                    }
+                },
+                update = { imageView ->
+                    Glide.with(context)
+                        .asGif()
+                        .load(url)
+                        .into(imageView)
+                }
+            )
+        }
         else -> {
             AndroidView(
                 modifier = Modifier
