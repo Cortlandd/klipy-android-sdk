@@ -57,7 +57,7 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.6")
 
     // Glide for image loading
-    implementation("com.github.bumptech.glide:glide:5.0.5")
+    api("com.github.bumptech.glide:glide:5.0.5")
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)

@@ -1,5 +1,3 @@
-# TECHNICALLY ITS READY FOR USE AS INDICATED BY THE SAMPLE BUT NOT PUBLISHED YET FOR USE
-
 ![](logo/android-klipy.png)
 
 # Klipy Android SDK
@@ -64,9 +62,9 @@ dependencyResolutionManagement {
 ```kotlin
 // app/build.gradle.kts
 dependencies {
-    implementation("com.github.Cortlandd:klipy-android-sdk:klipy:1.0.0")
+    implementation("com.github.Cortlandd:klipy-android-sdk:klipy:0.1.0")
     // If you want to use the picker fragment, the above isn't necessary to implement as ui uses it arleady
-    implementation("com.github.Cortlandd:klipy-android-sdk:klipy-ui:1.0.0")
+    implementation("com.github.Cortlandd:klipy-android-sdk:klipy-ui:0.1.0")
 }
 ```
 Or

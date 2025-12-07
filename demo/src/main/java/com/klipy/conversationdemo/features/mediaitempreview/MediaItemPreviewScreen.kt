@@ -28,9 +28,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogWindowProvider
-import com.klipy.conversationdemo.ui.components.SelectedMediaPreview
+import com.klipy.klipy_ui.components.MediaItemPreview
 import com.klipy.sdk.model.MediaItem
 import com.klipy.sdk.model.singularName
 
@@ -108,7 +106,7 @@ fun MediaItemPreviewScreen(
                     .weight(1f),
                 contentAlignment = Alignment.Center
             ) {
-                SelectedMediaPreview(item)
+                MediaItemPreview(item)
             }
 
             // Optional bottom caption / metadata
