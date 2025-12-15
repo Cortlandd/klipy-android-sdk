@@ -62,9 +62,9 @@ dependencyResolutionManagement {
 ```kotlin
 // app/build.gradle.kts
 dependencies {
-    implementation("com.github.Cortlandd:klipy-android-sdk:klipy:0.1.0")
+    implementation("com.github.Cortlandd:klipy-android-sdk:klipy:0.1.2")
     // If you want to use the picker fragment, the above isn't necessary to implement as ui uses it arleady
-    implementation("com.github.Cortlandd:klipy-android-sdk:klipy-ui:0.1.0")
+    implementation("com.github.Cortlandd:klipy-android-sdk:klipy-ui:0.1.2")
 }
 ```
 Or
@@ -89,9 +89,9 @@ dependencies {
 
 ## Basic Sample Demo Module Screenshots
 
-| Default chat list | Display conversation | Tapping the grid icon opens KlipyTray | Gif selection displaying in conversation | Show preview of selection   |
-|----------------------|------------------------|------------------------|------------------------|------------------------|------------------------|
-| ![](samples/demo/img.png) | ![](samples/demo/img_1.png) | ![](samples/demo/img_2.png) | ![](samples/demo/img_3.png) | ![](samples/demo/img_4.png) |
+| Default chat list         | Display conversation        | Tapping the grid icon opens KlipyTray | Gif selection displaying in conversation | Show preview of selection   |
+|---------------------------|-----------------------------|---------------------------------------|------------------------------------------|-----------------------------|
+| ![](samples/demo/img.png) | ![](samples/demo/img_1.png) | ![](samples/demo/img_2.png)           | ![](samples/demo/img_3.png)              | ![](samples/demo/img_4.png) |
 
 ## Quick Start
 
