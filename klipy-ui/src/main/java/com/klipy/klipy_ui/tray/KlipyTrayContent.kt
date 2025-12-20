@@ -33,7 +33,7 @@ import com.klipy.sdk.model.MetaData
 
 /**
  * Internal pure UI for the tray (state + actions only).
- * Exposed via [KlipyTray] in KlipyTrayCompose.kt for SDK users.
+ * Exposed via [KlipyTray] for SDK users.
  */
 @Composable
 internal fun KlipyTrayContent(
