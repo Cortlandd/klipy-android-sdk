@@ -63,9 +63,9 @@ dependencyResolutionManagement {
 ```kotlin
 // app/build.gradle.kts
 dependencies {
-    implementation("com.github.Cortlandd:klipy-android-sdk:klipy:0.1.2")
+    implementation("com.github.Cortlandd:klipy-android-sdk:klipy:0.1.4")
     // If you want to use the picker fragment, the above isn't necessary to implement as ui uses it arleady
-    implementation("com.github.Cortlandd:klipy-android-sdk:klipy-ui:0.1.2")
+    implementation("com.github.Cortlandd:klipy-android-sdk:klipy-ui:0.1.4")
 }
 ```
 Or
