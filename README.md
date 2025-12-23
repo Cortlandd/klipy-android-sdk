@@ -95,7 +95,9 @@ dependencies {
 
 ## Quick Start
 
-1. Configure in your Application
+1. Configure in your Application.
+
+Option 1:
 ```kotlin
 class App : Application() {
     override fun onCreate() {
@@ -111,11 +113,18 @@ class App : Application() {
 }
 ```
 
+Option 2:
+```kotlin
+val repo = KlipySdk.create(context, secretKey = "KLIPY_API_KEY")
+val result = repo.search(MediaType.GIF, "joker")
+```
+
 2. Show the picker in a Fragment
 ```kotlin
 class ChatFragment : Fragment(R.layout.fragment_chat), KlipyPickerListener {
 
     private fun openKlipyPicker() {
+        // OPTION 1
         val config = KlipyPickerConfig(
             mediaTypes = listOf(MediaType.GIF, MediaType.STICKER, MediaType.CLIP),
             columns = 3,
@@ -125,6 +134,20 @@ class ChatFragment : Fragment(R.layout.fragment_chat), KlipyPickerListener {
         )
 
         val dialog = KlipyPickerDialogFragment.newInstance(config).apply {
+            listener = this@ChatFragment
+        }
+        
+        // OR
+
+        // OPTION 2:
+        // If you don't want to call `KlipyUi.configure(repo)` in your `Application`, you can pass your
+        // Klipy API key directly to the picker fragment:
+
+        val dialog = KlipyPickerDialogFragment.newInstance(
+            config = config,
+            secretKey = "KLIPY_API_KEY",
+            enableLogging = true
+        ).apply {
             listener = this@ChatFragment
         }
 

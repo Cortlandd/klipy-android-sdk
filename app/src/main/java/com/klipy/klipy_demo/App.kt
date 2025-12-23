@@ -7,12 +7,12 @@ import com.klipy.sdk.KlipySdk
 class App : Application() {
     override fun onCreate() {
         super.onCreate()
-        val repo = KlipySdk.create(
-            context = this,
-            secretKey = "gBAJiSCmnYiDLeGoUSBddk8FwuWFaLDMJ24vUBlalQS4IkCoBpznFZPZpBj1QZfh",
-            enableLogging = true
-        )
-
-        KlipyUi.configure(repo)
+//        val repo = KlipySdk.create(
+//            context = this,
+//            secretKey = "gBAJiSCmnYiDLeGoUSBddk8FwuWFaLDMJ24vUBlalQS4IkCoBpznFZPZpBj1QZfh",
+//            enableLogging = true
+//        )
+//
+//        KlipyUi.configure(repo)
     }
 }

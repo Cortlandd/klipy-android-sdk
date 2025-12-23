@@ -53,7 +53,7 @@ class HomeFragment : ReducerFragment<HomeState, HomeAction, HomeEffect, HomeRedu
             showTrending = true
         )
 
-        val dialog = KlipyPickerDialogFragment.newInstance(config)
+        val dialog = KlipyPickerDialogFragment.newInstance(config, secretKey = "gBAJiSCmnYiDLeGoUSBddk8FwuWFaLDMJ24vUBlalQS4IkCoBpznFZPZpBj1QZfh")
         dialog.listener = object : KlipyPickerListener {
 
             override fun onMediaSelected(item: MediaItem, searchTerm: String?) {

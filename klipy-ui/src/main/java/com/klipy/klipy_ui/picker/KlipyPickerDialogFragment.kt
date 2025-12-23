@@ -16,6 +16,8 @@ import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.google.android.material.tabs.TabLayout
 import com.klipy.klipy_ui.KlipyUi
+import com.klipy.sdk.KlipyRepository
+import com.klipy.sdk.KlipySdk
 import com.klipy.sdk.model.MediaData
 import com.klipy.sdk.model.MediaItem
 import com.klipy.sdk.model.MediaType
@@ -60,10 +62,33 @@ class KlipyPickerDialogFragment : BottomSheetDialogFragment() {
 
     companion object {
         private const val ARG_CONFIG = "klipy_config"
+        private const val ARG_SECRET_KEY = "klipy_secret_key"
+        private const val ARG_BASE_API_URL = "klipy_base_api_url"
+        private const val ARG_ENABLE_LOGGING = "klipy_enable_logging"
 
         fun newInstance(config: KlipyPickerConfig): KlipyPickerDialogFragment {
             return KlipyPickerDialogFragment().apply {
                 arguments = bundleOf(ARG_CONFIG to config)
+            }
+        }
+
+        /**
+         * GIPHY-style usage: pass your Klipy API key directly to the fragment.
+         * This lets devs use the picker without calling KlipyUi.configure(repo) first.
+         */
+        fun newInstance(
+            config: KlipyPickerConfig,
+            secretKey: String,
+            baseApiUrl: String = "https://api.klipy.com/api/v1/",
+            enableLogging: Boolean = false
+        ): KlipyPickerDialogFragment {
+            return KlipyPickerDialogFragment().apply {
+                arguments = bundleOf(
+                    ARG_CONFIG to config,
+                    ARG_SECRET_KEY to secretKey,
+                    ARG_BASE_API_URL to baseApiUrl,
+                    ARG_ENABLE_LOGGING to enableLogging
+                )
             }
         }
     }
@@ -74,7 +99,31 @@ class KlipyPickerDialogFragment : BottomSheetDialogFragment() {
     private val binding get() = _binding!!
 
     private lateinit var config: KlipyPickerConfig
-    private val repo get() = KlipyUi.requireRepository()
+
+    private val repo: KlipyRepository by lazy {
+        // Prefer a globally-configured repository if the host app provided one.
+        KlipyUi.getRepositoryOrNull() ?: buildRepoFromArgs()
+    }
+
+    private fun buildRepoFromArgs(): KlipyRepository {
+        val args = requireArguments()
+
+        val secretKey = args.getString(ARG_SECRET_KEY)
+            ?: error(
+                "Missing secretKey. Either call KlipyUi.configure(repo) or use " +
+                        "KlipyPickerDialogFragment.newInstance(config, secretKey, ...)"
+            )
+
+        val baseApiUrl = args.getString(ARG_BASE_API_URL) ?: "https://api.klipy.com/api/v1/"
+        val enableLogging = args.getBoolean(ARG_ENABLE_LOGGING, false)
+
+        return KlipySdk.create(
+            context = requireContext().applicationContext,
+            secretKey = secretKey,
+            baseApiUrl = baseApiUrl,
+            enableLogging = enableLogging
+        )
+    }
 
     private val adapter = KlipyMediaAdapter { onItemClicked(it) }
 
