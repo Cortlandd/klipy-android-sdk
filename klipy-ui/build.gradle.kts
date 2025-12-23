@@ -42,9 +42,6 @@ dependencies {
 
     api(project(":klipy"))
 
-    // For architecture of tray
-    implementation("com.github.Cortlandd:Ghettoxide:1.0.7")
-
     api("androidx.appcompat:appcompat:1.7.0")
     api("com.google.android.material:material:1.12.0")
 

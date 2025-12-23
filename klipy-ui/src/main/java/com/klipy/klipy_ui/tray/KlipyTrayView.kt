@@ -8,18 +8,14 @@ import android.widget.LinearLayout
 import android.widget.ProgressBar
 import androidx.core.widget.addTextChangedListener
 import androidx.lifecycle.LifecycleOwner
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.cortlandwalker.ghettoxide.BaseViewModel
-import com.cortlandwalker.ghettoxide.StoreViewModel
 import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
 import com.google.android.material.textfield.TextInputEditText
 import com.klipy.klipy_ui.picker.KlipyMediaAdapter
-import com.klipy.sdk.R
 import com.klipy.sdk.model.Category
 import com.klipy.sdk.model.MediaItem
 import com.klipy.sdk.model.MediaType
@@ -40,7 +36,7 @@ interface KlipyTrayListener {
  * This view:
  *  - Inflates its own layout
  *  - Renders [KlipyTrayState]
- *  - Dispatches [KlipyTrayAction] to a Ghettoxide StoreViewModel
+ *  - Dispatches [KlipyTrayAction] to a [KlipyTrayViewModel]
  */
 class KlipyTrayView @JvmOverloads constructor(
     context: Context,
@@ -57,7 +53,7 @@ class KlipyTrayView @JvmOverloads constructor(
     private lateinit var adapter: KlipyMediaAdapter
     private var config: KlipyTrayConfig = KlipyTrayConfig()
 
-    private var store: BaseViewModel<KlipyTrayState, KlipyTrayAction, KlipyTrayEffect>? = null
+    private var viewModel: KlipyTrayViewModel? = null
 
     var listener: KlipyTrayListener? = null
 
@@ -76,7 +72,7 @@ class KlipyTrayView @JvmOverloads constructor(
 
     private fun setupRecycler() {
         adapter = KlipyMediaAdapter { item ->
-            store?.postAction(KlipyTrayAction.MediaItemClicked(item))
+            viewModel?.dispatch(KlipyTrayAction.MediaItemClicked(item))
         }
         mediaRecycler.adapter = adapter
         mediaRecycler.layoutManager = GridLayoutManager(context, config.columns)
@@ -90,7 +86,7 @@ class KlipyTrayView @JvmOverloads constructor(
                 val totalItemCount = lm.itemCount
                 val firstVisibleItem = lm.findFirstVisibleItemPosition()
 
-                store?.postAction(
+                viewModel?.dispatch(
                     KlipyTrayAction.LoadNextPage(
                         visibleItemCount = visibleItemCount,
                         totalItemCount = totalItemCount,
@@ -102,16 +98,17 @@ class KlipyTrayView @JvmOverloads constructor(
     }
 
     /**
-     * Bind this view to a Ghettoxide store.
+     * Bind this view to a [KlipyTrayViewModel].
      *
-     * Host is responsible for creating the StoreViewModel with the same config.
+     * Host is responsible for creating the ViewModel (typically via Activity/Fragment scope)
+     * and passing it in.
      */
-    fun bindToStore(
+    fun bind(
         lifecycleOwner: LifecycleOwner,
-        store: BaseViewModel<KlipyTrayState, KlipyTrayAction, KlipyTrayEffect>,
+        viewModel: KlipyTrayViewModel,
         config: KlipyTrayConfig = KlipyTrayConfig()
     ) {
-        this.store = store
+        this.viewModel = viewModel
         this.config = config
 
         (mediaRecycler.layoutManager as? GridLayoutManager)?.spanCount = config.columns
@@ -119,7 +116,7 @@ class KlipyTrayView @JvmOverloads constructor(
         setupMediaTypeChips(config.mediaTypes)
 
         searchInput.addTextChangedListener { text ->
-            store.postAction(
+            viewModel.dispatch(
                 KlipyTrayAction.SearchInputChanged(text?.toString().orEmpty())
             )
         }
@@ -129,10 +126,10 @@ class KlipyTrayView @JvmOverloads constructor(
                 androidx.lifecycle.Lifecycle.State.STARTED
             ) {
                 launch {
-                    store.state.collectLatest { renderState(it) }
+                    viewModel.state.collectLatest { renderState(it) }
                 }
                 launch {
-                    store.effects.collectLatest { effect ->
+                    viewModel.effects.collectLatest { effect ->
                         when (effect) {
                             is KlipyTrayEffect.ShowError ->
                                 listener?.onKlipyTrayError(effect.message)
@@ -146,7 +143,7 @@ class KlipyTrayView @JvmOverloads constructor(
         }
 
         // 🔑 Kick off initial load
-        store.reducer.onLoadAction()?.let(store::postAction)
+        viewModel.start()
     }
 
     private fun setupMediaTypeChips(mediaTypes: List<MediaType>) {
@@ -156,7 +153,7 @@ class KlipyTrayView @JvmOverloads constructor(
                 text = type.name.uppercase()
                 isCheckable = true
                 setOnClickListener {
-                    store?.postAction(KlipyTrayAction.MediaTypeSelected(type))
+                    viewModel?.dispatch(KlipyTrayAction.MediaTypeSelected(type))
                 }
             }
             mediaTypeGroup.addView(chip)
@@ -197,7 +194,7 @@ class KlipyTrayView @JvmOverloads constructor(
             isCheckable = true
             isChecked = selected == null
             setOnClickListener {
-                store?.postAction(KlipyTrayAction.CategorySelected(null))
+                viewModel?.dispatch(KlipyTrayAction.CategorySelected(null))
             }
         }
         categoryGroup.addView(allChip)
@@ -208,7 +205,7 @@ class KlipyTrayView @JvmOverloads constructor(
                 isCheckable = true
                 isChecked = cat == selected
                 setOnClickListener {
-                    store?.postAction(KlipyTrayAction.CategorySelected(cat))
+                    viewModel?.dispatch(KlipyTrayAction.CategorySelected(cat))
                 }
             }
             categoryGroup.addView(chip)

@@ -21,22 +21,23 @@ The SDK and sample app are built using current Android patterns and libraries:
 - **Sample App Features**
     - **Single-Activity / Nav Graph** using **Jetpack Navigation** for screen flow.
     - **Fragment-based UI** (e.g., `HomeFragment`) hosting:
-      - A **Compose** `HomeScreen` via `ComposeView`.
-      - The **Klipy picker** as a `BottomSheetDialogFragment`.
+        - A **Compose** `HomeScreen` via `ComposeView`.
+        - The **Klipy picker** as a `BottomSheetDialogFragment`.
     - **Jetpack Compose** for the home screen and selections:
-      - Uses `@Composable` UI for the demo screen.
-      - Integrates SDK results back into Compose via `AndroidView`.
+        - Uses `@Composable` UI for the demo screen.
+        - Integrates SDK results back into Compose via `AndroidView`.
     - **Coroutines + Flow**:
-      - `viewModelScope`, `suspend` functions, and `Result` wrapping for network calls.
-      - `StateFlow` to drive UI state from ViewModels.
+        - `viewModelScope`, `suspend` functions, and `Result` wrapping for network calls.
+        - `StateFlow` to drive UI state from ViewModels.
     - **Glide 5** for image & GIF rendering and thumbnailing (GIFs, stickers, mp4 clips).
     - **Paging-like UX** in the picker:
-      - Infinite scroll on RecyclerView to load additional pages.
+        - Infinite scroll on RecyclerView to load additional pages.
     - **Material Components**:
-      - Uses Material 3 in the Compose demo screen.
-      - Uses Material bottom sheet for the picker UI.
-    - **Ghettoxide**:
-      - Helper files based on Redux. Meant to make android development seamless.
+        - Uses Material 3 in the Compose demo screen.
+        - Uses Material bottom sheet for the picker UI.
+    - **State management**:
+        - `klipy-ui` tray/picker uses only AndroidX ViewModel + StateFlow (no external architecture dependency).
+        - `demo` may include additional helper abstractions for experimentation.
 
 You can use the SDK in:
 - Pure XML / Fragment apps.
@@ -95,9 +96,7 @@ dependencies {
 
 ## Quick Start
 
-1. Configure in your Application.
-
-Option 1:
+1. Option 1: Configure once (recommended if you're already using the core SDK)
 ```kotlin
 class App : Application() {
     override fun onCreate() {
@@ -113,18 +112,11 @@ class App : Application() {
 }
 ```
 
-Option 2:
-```kotlin
-val repo = KlipySdk.create(context, secretKey = "KLIPY_API_KEY")
-val result = repo.search(MediaType.GIF, "joker")
-```
-
-2. Show the picker in a Fragment
+2. Show the picker in a Fragment (works with Option 1 above, or the picker-only setup below)
 ```kotlin
 class ChatFragment : Fragment(R.layout.fragment_chat), KlipyPickerListener {
 
     private fun openKlipyPicker() {
-        // OPTION 1
         val config = KlipyPickerConfig(
             mediaTypes = listOf(MediaType.GIF, MediaType.STICKER, MediaType.CLIP),
             columns = 3,
@@ -134,20 +126,6 @@ class ChatFragment : Fragment(R.layout.fragment_chat), KlipyPickerListener {
         )
 
         val dialog = KlipyPickerDialogFragment.newInstance(config).apply {
-            listener = this@ChatFragment
-        }
-        
-        // OR
-
-        // OPTION 2:
-        // If you don't want to call `KlipyUi.configure(repo)` in your `Application`, you can pass your
-        // Klipy API key directly to the picker fragment:
-
-        val dialog = KlipyPickerDialogFragment.newInstance(
-            config = config,
-            secretKey = "KLIPY_API_KEY",
-            enableLogging = true
-        ).apply {
             listener = this@ChatFragment
         }
 
@@ -171,8 +149,27 @@ class ChatFragment : Fragment(R.layout.fragment_chat), KlipyPickerListener {
 }
 ```
 
+If you don't want to configure `KlipyUi` globally, you can also open the picker by passing your API key directly.
+
+### Alternative: show the picker without global configuration (GIPHY-style)
+
+If you don't want to call `KlipyUi.configure(repo)` in your `Application`, you can pass your
+Klipy API key directly to the picker fragment:
+
+```kotlin
+val dialog = KlipyPickerDialogFragment.newInstance(
+    config = config,
+    secretKey = "KLIPY_API_KEY",
+    enableLogging = true
+).apply {
+    listener = this@ChatFragment
+}
+
+dialog.show(childFragmentManager, "klipy_picker")
+```
+
 3. Rendering media
-You decide how to render the MediaItem:
+   You decide how to render the MediaItem:
 ```kotlin
 Glide.with(imageView)
     .asGif()
@@ -236,7 +233,7 @@ You can then render the selected MediaItem however you like (e.g., Glide for GIF
 - com.klipy.klipy_ui.KlipyPickerConfig
 - com.klipy.klipy_ui.KlipyPickerDialogFragment
 - com.klipy.klipy_ui.KlipyPickerListener
-Everything under com.klipy.sdk.data and KlipyMediaAdapter is internal implementation detail.
+  Everything under com.klipy.sdk.data and KlipyMediaAdapter is internal implementation detail.
 
 ---
 
