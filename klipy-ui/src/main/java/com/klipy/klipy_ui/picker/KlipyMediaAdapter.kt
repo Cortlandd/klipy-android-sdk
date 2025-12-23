@@ -18,6 +18,17 @@ import com.cortlandwalker.klipy_ui.databinding.ItemKlipyMediaBinding
 import com.klipy.sdk.model.MediaItem
 import com.klipy.sdk.model.MediaType
 
+/**
+ * Simple [ListAdapter] for displaying [MediaItem]s in a grid.
+ *
+ * This is used by [KlipyPickerDialogFragment] but can also be reused if you want
+ * to build a custom UI around [com.klipy.sdk.KlipyRepository] results.
+ *
+ * It uses Glide under the hood and:
+ * - Shows the best available preview URL (GIF / PNG / WebP / MP4).
+ * - Shows a "play" overlay for clips.
+ * - Handles a simple skeleton/loading state.
+ */
 class KlipyMediaAdapter(
     private val onClick: (MediaItem) -> Unit
 ) : ListAdapter<MediaItem, KlipyMediaAdapter.VH>(Diff) {

@@ -1,17 +1,14 @@
-package com.klipy.klipy_demo.features.home.ui
+package com.klipy.klipy_ui.components
 
+import android.R
 import android.net.Uri
 import android.widget.ImageView
 import android.widget.VideoView
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
@@ -24,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.bumptech.glide.Glide
@@ -31,7 +29,7 @@ import com.klipy.sdk.model.MediaItem
 import com.klipy.sdk.model.MediaType
 
 @Composable
-fun SelectedMediaPreview(item: MediaItem) {
+fun MediaItemPreview(item: MediaItem) {
     val context = LocalContext.current
     val meta = item.highQualityMetaData ?: item.lowQualityMetaData
     val url = meta?.url ?: return
@@ -93,14 +91,32 @@ fun SelectedMediaPreview(item: MediaItem) {
                         .clip(CircleShape)
                         .background(Color.Black.copy(alpha = 0.6f))
                 ) {
-                    val icon = if (isPlaying) Icons.Filled.Close else Icons.Filled.PlayArrow
+                    val icon = if (isPlaying) painterResource(R.drawable.ic_media_pause) else painterResource(R.drawable.ic_media_play)
                     Icon(
-                        imageVector = icon,
+                        painter = icon,
                         contentDescription = if (isPlaying) "Pause" else "Play",
                         tint = Color.White
                     )
                 }
             }
+        }
+        MediaType.GIF, MediaType.STICKER -> {
+            AndroidView(
+                modifier = Modifier
+                    .size(240.dp)
+                    .clip(RoundedCornerShape(16.dp)),
+                factory = { ctx ->
+                    ImageView(ctx).apply {
+                        scaleType = ImageView.ScaleType.CENTER_CROP
+                    }
+                },
+                update = { imageView ->
+                    Glide.with(context)
+                        .asGif()
+                        .load(url)
+                        .into(imageView)
+                }
+            )
         }
         else -> {
             AndroidView(

@@ -3,6 +3,7 @@ package com.klipy.sdk.data
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.util.Base64
+import android.util.Log
 import com.klipy.sdk.model.MediaItem
 import com.klipy.sdk.model.MediaType
 import com.klipy.sdk.model.MetaData
@@ -46,14 +47,16 @@ internal class MediaItemMapperImpl : MediaItemMapper {
             }
 
             is MediaItemDto.GeneralMediaItemDto -> {
+                val normalizedType = data.type?.lowercase()
+
                 val (lowFile, highFile) = data.file?.let { dims ->
                     val low = dims.md ?: dims.hd ?: dims.xs
                     val high = dims.hd ?: dims.md ?: dims.sm
                     low to high
                 } ?: (null to null)
 
-                val lowMetaDto = pickStaticSource(data.type, lowFile)
-                val highMetaDto = pickStaticSource(data.type, highFile)
+                val lowMetaDto = pickStaticSource(normalizedType, lowFile)
+                val highMetaDto = pickStaticSource(normalizedType, highFile)
 
                 MediaItem(
                     id = data.slug!!,
@@ -61,10 +64,10 @@ internal class MediaItemMapperImpl : MediaItemMapper {
                     placeHolder = data.placeHolder?.base64ToBitmap(),
                     lowQualityMetaData = lowMetaDto?.toDomain(),
                     highQualityMetaData = highMetaDto?.toDomain(),
-                    mediaType = when (data.type) {
+                    mediaType = when (normalizedType) {
                         "gif" -> MediaType.GIF
                         "sticker" -> MediaType.STICKER
-                        "meme" -> MediaType.MEME
+                        "meme", "static-meme", "static-memes" -> MediaType.MEME
                         else -> MediaType.GIF
                     }
                 )
@@ -95,7 +98,7 @@ internal class MediaItemMapperImpl : MediaItemMapper {
         if (file == null) return null
 
         return when (type) {
-            "meme" -> file.png ?: file.jpg ?: file.webp ?: file.gif
+            "meme", "static-meme", "static-memes" -> file.png ?: file.jpg ?: file.webp ?: file.gif
             "sticker" -> file.gif ?: file.png ?: file.jpg ?: file.webp
             "gif" -> file.gif ?: file.webp
             else -> file.gif ?: file.webp ?: file.png ?: file.jpg
