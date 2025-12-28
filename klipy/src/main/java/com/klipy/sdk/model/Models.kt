@@ -73,10 +73,11 @@ data class MediaData(
 data class MediaItem(
     val id: String,
     val title: String?,
-    val placeHolder: Bitmap?,
+    val blurPreview: Bitmap?,
     val lowQualityMetaData: MetaData?,
     val highQualityMetaData: MetaData?,
-    val mediaType: MediaType
+    val mediaType: MediaType,
+    val tags: List<String> = emptyList()
 )
 
 /** Simple metadata describing a single media file variant. */

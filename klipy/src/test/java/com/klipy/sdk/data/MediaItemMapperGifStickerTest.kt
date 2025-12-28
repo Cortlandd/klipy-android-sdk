@@ -17,7 +17,7 @@ class MediaItemMapperGifStickerTest {
         val dto = MediaItemDto.GeneralMediaItemDto(
             slug = "funny-cat",
             title = "Funny cat",
-            placeHolder = null,
+            blurPreview = null,
             file = DimensionsDto(
                 hd = FileTypesDto(
                     gif = FileMetaDataDto(
@@ -42,7 +42,7 @@ class MediaItemMapperGifStickerTest {
         assertEquals("funny-cat", result.id)
         assertEquals(MediaType.GIF, result.mediaType)
         assertEquals("Funny cat", result.title)
-        assertNull(result.placeHolder)
+        assertNull(result.blurPreview)
 
         requireNotNull(result.lowQualityMetaData)
         requireNotNull(result.highQualityMetaData)
@@ -61,7 +61,7 @@ class MediaItemMapperGifStickerTest {
         val dto = MediaItemDto.GeneralMediaItemDto(
             slug = "party-hat",
             title = "Party hat",
-            placeHolder = null,
+            blurPreview = null,
             file = DimensionsDto(
                 hd = FileTypesDto(
                     gif = FileMetaDataDto(
@@ -79,7 +79,7 @@ class MediaItemMapperGifStickerTest {
         assertEquals("party-hat", result.id)
         assertEquals(MediaType.STICKER, result.mediaType)
         assertEquals("Party hat", result.title)
-        assertNull(result.placeHolder)
+        assertNull(result.blurPreview)
 
         requireNotNull(result.lowQualityMetaData)
         requireNotNull(result.highQualityMetaData)

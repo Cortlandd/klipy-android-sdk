@@ -20,7 +20,7 @@ class MediaModelExtensionsTest {
         val adItem = MediaItem(
             id = "ad-1",
             title = null,
-            placeHolder = null,
+            blurPreview = null,
             lowQualityMetaData = meta,
             highQualityMetaData = null,
             mediaType = MediaType.AD
@@ -29,7 +29,7 @@ class MediaModelExtensionsTest {
         val gifItem = MediaItem(
             id = "gif-1",
             title = "Gif",
-            placeHolder = null,
+            blurPreview = null,
             lowQualityMetaData = meta,
             highQualityMetaData = null,
             mediaType = MediaType.GIF

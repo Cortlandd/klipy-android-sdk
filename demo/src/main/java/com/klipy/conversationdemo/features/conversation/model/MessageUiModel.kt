@@ -37,7 +37,7 @@ fun MessageUiModel.toMediaItemOrNull(): MediaItem? = when (this) {
         MediaItem(
             id = id,
             title = null,
-            placeHolder = null,
+            blurPreview = null,
             lowQualityMetaData = MetaData(
                 url = url,
                 width = width,
@@ -54,7 +54,7 @@ fun MessageUiModel.toMediaItemOrNull(): MediaItem? = when (this) {
         MediaItem(
             id = id,
             title = null,
-            placeHolder = null,
+            blurPreview = null,
             // Use thumb as low quality
             lowQualityMetaData = MetaData(
                 url = url,

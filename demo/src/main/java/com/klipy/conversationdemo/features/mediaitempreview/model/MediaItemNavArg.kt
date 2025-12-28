@@ -39,7 +39,7 @@ data class MediaItemNavArg(
         return MediaItem(
             id = id,
             title = title,
-            placeHolder = null,
+            blurPreview = null,
             lowQualityMetaData = low,
             highQualityMetaData = high,
             mediaType = mediaType

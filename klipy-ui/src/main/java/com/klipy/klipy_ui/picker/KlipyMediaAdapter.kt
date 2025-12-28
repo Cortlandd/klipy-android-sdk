@@ -61,8 +61,10 @@ class KlipyMediaAdapter(
 
             Log.d(
                 "KlipyMediaAdapter",
-                "bind id=${item.id}, type=${item.mediaType}, url=$url"
+                "bind id=${item.id}, type=${item.mediaType}, url=$url, tags=${item.tags}"
             )
+
+            Log.d("KlipyMediaAdapter ITEM", item.toString())
 
             // Reset UI
             binding.skeletonView.visibility = View.VISIBLE
@@ -109,11 +111,11 @@ class KlipyMediaAdapter(
                         }
                     })
                     .into(binding.imageMedia)
-            } else if (item.placeHolder != null) {
+            } else if (item.blurPreview != null) {
                 binding.skeletonView.visibility = View.GONE
                 binding.itemProgress.visibility = View.GONE
                 binding.imageMedia.visibility = View.VISIBLE
-                binding.imageMedia.setImageBitmap(item.placeHolder)
+                binding.imageMedia.setImageBitmap(item.blurPreview)
             } else {
                 binding.itemProgress.visibility = View.GONE
                 binding.imageMedia.visibility = View.INVISIBLE

@@ -25,7 +25,7 @@ class MediaItemMapperAdTest {
         assertTrue("Id must start with ad-", result.id.startsWith("ad-"))
         assertEquals(MediaType.AD, result.mediaType)
         assertNull(result.title)
-        assertNull(result.placeHolder)
+        assertNull(result.blurPreview)
 
         assertNotNull(result.lowQualityMetaData)
         assertNull(result.highQualityMetaData)

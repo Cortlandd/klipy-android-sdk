@@ -3,7 +3,6 @@ package com.klipy.sdk.data
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.util.Base64
-import android.util.Log
 import com.klipy.sdk.model.MediaItem
 import com.klipy.sdk.model.MediaType
 import com.klipy.sdk.model.MetaData
@@ -39,7 +38,7 @@ internal class MediaItemMapperImpl : MediaItemMapper {
                 MediaItem(
                     id = data.slug!!,
                     title = data.title,
-                    placeHolder = data.placeHolder?.base64ToBitmap(),
+                    blurPreview = data.blurPreview?.base64ToBitmap(),
                     lowQualityMetaData = selectorMeta,
                     highQualityMetaData = previewMeta,
                     mediaType = MediaType.CLIP
@@ -61,7 +60,7 @@ internal class MediaItemMapperImpl : MediaItemMapper {
                 MediaItem(
                     id = data.slug!!,
                     title = data.title,
-                    placeHolder = data.placeHolder?.base64ToBitmap(),
+                    blurPreview = data.blurPreview?.base64ToBitmap(),
                     lowQualityMetaData = lowMetaDto?.toDomain(),
                     highQualityMetaData = highMetaDto?.toDomain(),
                     mediaType = when (normalizedType) {
@@ -82,7 +81,7 @@ internal class MediaItemMapperImpl : MediaItemMapper {
                 MediaItem(
                     id = "ad-${UUID.randomUUID()}",
                     title = null,
-                    placeHolder = null,
+                    blurPreview = null,
                     lowQualityMetaData = meta,
                     highQualityMetaData = null,
                     mediaType = MediaType.AD

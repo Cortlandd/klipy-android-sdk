@@ -297,7 +297,7 @@ private fun KlipyTrayContentPreview() {
         MediaItem(
             id = "6333290484303727",
             title = "Cute Audi TT",
-            placeHolder = null,
+            blurPreview = null,
             lowQualityMetaData = MetaData(
                 // xs.gif from your sample response
                 url = "https://thumbs.dreamstime.com/b/sample-jpeg-fluffy-white-pomeranian-puppy-sits-looks-camera-colorful-balls-front-364720569.jpg",
@@ -316,7 +316,7 @@ private fun KlipyTrayContentPreview() {
         MediaItem(
             id = "6333290484303727-2",
             title = "Cute Audi TT (alt)",
-            placeHolder = null,
+            blurPreview = null,
             lowQualityMetaData = MetaData(
                 // sm.gif variant
                 url = "https://thumbs.dreamstime.com/b/sample-jpeg-fluffy-white-pomeranian-puppy-sits-looks-camera-colorful-balls-front-364720569.jpg",
@@ -334,7 +334,7 @@ private fun KlipyTrayContentPreview() {
         MediaItem(
             id = "6333290484303727-3",
             title = "Cute Audi TT (small)",
-            placeHolder = null,
+            blurPreview = null,
             lowQualityMetaData = MetaData(
                 // another small variant (xs.webp as GIF still works for preview)
                 url = "https://thumbs.dreamstime.com/b/sample-jpeg-fluffy-white-pomeranian-puppy-sits-looks-camera-colorful-balls-front-364720569.jpg",

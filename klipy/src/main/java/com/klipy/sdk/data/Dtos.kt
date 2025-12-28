@@ -122,11 +122,13 @@ sealed interface MediaItemDto {
         @SerializedName("title")
         val title: String? = null,
         @SerializedName("blur_preview")
-        val placeHolder: String? = null,
+        val blurPreview: String? = null,
         @SerializedName("file")
         val file: DimensionsDto? = null,
         @SerializedName("type")
-        val type: String? = null
+        val type: String? = null,
+        @SerializedName("tags")
+        val tags: List<String>? = null
     ) : MediaItemDto
 
     data class ClipMediaItemDto(
@@ -135,13 +137,15 @@ sealed interface MediaItemDto {
         @SerializedName("title")
         val title: String? = null,
         @SerializedName("blur_preview")
-        val placeHolder: String? = null,
+        val blurPreview: String? = null,
         @SerializedName("file_meta")
         val fileMeta: FileTypesDto? = null,
         @SerializedName("file")
         val file: ClipFileDto? = null,
         @SerializedName("type")
-        val type: String? = null
+        val type: String? = null,
+        @SerializedName("tags")
+        val tags: List<String>? = null
     ) : MediaItemDto
 
     data class AdMediaItemDto(

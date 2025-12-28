@@ -17,7 +17,7 @@ class MediaItemMapperClipTest {
         val dto = MediaItemDto.ClipMediaItemDto(
             slug = "awesome-clip",
             title = "Awesome clip",
-            placeHolder = null,
+            blurPreview = null,
             fileMeta = FileTypesDto(
                 gif = FileMetaDataDto(
                     url = "https://cdn.example.com/clip/selector.gif",
@@ -43,7 +43,7 @@ class MediaItemMapperClipTest {
         assertEquals("awesome-clip", result.id)
         assertEquals(MediaType.CLIP, result.mediaType)
         assertEquals("Awesome clip", result.title)
-        assertNull(result.placeHolder)
+        assertNull(result.blurPreview)
 
         requireNotNull(result.lowQualityMetaData)
         requireNotNull(result.highQualityMetaData)
