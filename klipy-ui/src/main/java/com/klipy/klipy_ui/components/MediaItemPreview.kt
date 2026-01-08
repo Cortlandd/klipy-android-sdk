@@ -20,6 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
@@ -29,7 +30,13 @@ import com.klipy.sdk.model.MediaItem
 import com.klipy.sdk.model.MediaType
 
 @Composable
-fun MediaItemPreview(item: MediaItem) {
+fun MediaItemPreview(
+    item: MediaItem,
+    modifier: Modifier = Modifier
+        .size(240.dp)
+        .clip(RoundedCornerShape(16.dp)),
+    contentScale: ContentScale = ContentScale.Fit
+) {
     val context = LocalContext.current
     val meta = item.highQualityMetaData ?: item.lowQualityMetaData
     val url = meta?.url ?: return
@@ -41,9 +48,7 @@ fun MediaItemPreview(item: MediaItem) {
             var videoView by remember { mutableStateOf<VideoView?>(null) }
 
             Box(
-                modifier = Modifier
-                    .size(240.dp)
-                    .clip(RoundedCornerShape(16.dp))
+                modifier = modifier
             ) {
                 AndroidView(
                     modifier = Modifier.matchParentSize(),
@@ -102,15 +107,27 @@ fun MediaItemPreview(item: MediaItem) {
         }
         MediaType.GIF, MediaType.STICKER -> {
             AndroidView(
-                modifier = Modifier
-                    .size(240.dp)
-                    .clip(RoundedCornerShape(16.dp)),
+                modifier = modifier,
                 factory = { ctx ->
                     ImageView(ctx).apply {
-                        scaleType = ImageView.ScaleType.CENTER_CROP
+                        scaleType = when (contentScale) {
+                            ContentScale.Fit -> ImageView.ScaleType.FIT_CENTER
+                            ContentScale.FillBounds -> ImageView.ScaleType.FIT_XY
+                            else -> ImageView.ScaleType.CENTER_CROP
+                        }
                     }
                 },
                 update = { imageView ->
+                    // Update scale type if it changes
+                    val targetScaleType = when (contentScale) {
+                        ContentScale.Fit -> ImageView.ScaleType.FIT_CENTER
+                        ContentScale.FillBounds -> ImageView.ScaleType.FIT_XY
+                        else -> ImageView.ScaleType.CENTER_CROP
+                    }
+                    if (imageView.scaleType != targetScaleType) {
+                        imageView.scaleType = targetScaleType
+                    }
+
                     Glide.with(context)
                         .asGif()
                         .load(url)
@@ -120,15 +137,26 @@ fun MediaItemPreview(item: MediaItem) {
         }
         else -> {
             AndroidView(
-                modifier = Modifier
-                    .size(240.dp)
-                    .clip(RoundedCornerShape(16.dp)),
+                modifier = modifier,
                 factory = { ctx ->
                     ImageView(ctx).apply {
-                        scaleType = ImageView.ScaleType.CENTER_CROP
+                        scaleType = when (contentScale) {
+                            ContentScale.Fit -> ImageView.ScaleType.FIT_CENTER
+                            ContentScale.FillBounds -> ImageView.ScaleType.FIT_XY
+                            else -> ImageView.ScaleType.CENTER_CROP
+                        }
                     }
                 },
                 update = { imageView ->
+                    val targetScaleType = when (contentScale) {
+                        ContentScale.Fit -> ImageView.ScaleType.FIT_CENTER
+                        ContentScale.FillBounds -> ImageView.ScaleType.FIT_XY
+                        else -> ImageView.ScaleType.CENTER_CROP
+                    }
+                    if (imageView.scaleType != targetScaleType) {
+                        imageView.scaleType = targetScaleType
+                    }
+
                     Glide.with(context)
                         .load(url)
                         .into(imageView)
