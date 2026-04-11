@@ -13,43 +13,6 @@ Latest platform references:
 
 ---
 
-## Modern Android Stack
-
-The SDK and sample app are built using current Android patterns and libraries:
-
-- **Modular SDK**
-    - `klipy`: core networking + data models (Kotlin, coroutines, Flow).
-    - `klipy-ui`: optional UI module providing a ready-made picker dialog (BottomSheetDialogFragment, RecyclerView, Glide).
-    - `demo`: A sample chat app that makes use of KlipyTray to get images from keyboard.
-    - `app`: A sample to showcase the KlipyPickerDialogFragment to allow Klipy search with 1 button.
-
-- **Sample App Features**
-    - **Single-Activity / Nav Graph** using **Jetpack Navigation** for screen flow.
-    - **Fragment-based UI** (e.g., `HomeFragment`) hosting:
-        - A **Compose** `HomeScreen` via `ComposeView`.
-        - The **Klipy picker** as a `BottomSheetDialogFragment`.
-    - **Jetpack Compose** for the home screen and selections:
-        - Uses `@Composable` UI for the demo screen.
-        - Integrates SDK results back into Compose via `AndroidView`.
-    - **Coroutines + Flow**:
-        - `viewModelScope`, `suspend` functions, and `Result` wrapping for network calls.
-        - `StateFlow` to drive UI state from ViewModels.
-    - **Glide 5** for image & GIF rendering and thumbnailing (GIFs, stickers, mp4 clips).
-    - **Paging-like UX** in the picker:
-        - Infinite scroll on RecyclerView to load additional pages.
-    - **Material Components**:
-        - Uses Material 3 in the Compose demo screen.
-        - Uses Material bottom sheet for the picker UI.
-    - **State management**:
-        - `klipy-ui` tray/picker uses only AndroidX ViewModel + StateFlow (no external architecture dependency).
-        - `demo` may include additional helper abstractions for experimentation.
-
-You can use the SDK in:
-- Pure XML / Fragment apps.
-- Compose-first apps (by hosting Fragment or Dialog via `AndroidView` or regular fragment transactions).
-
----
-
 ## Installation
 
 1. Add the JitPack repository to your project:
