@@ -164,7 +164,9 @@ sealed interface MediaItemDto {
 
 data class TriggerViewRequestDto(
     @SerializedName("customer_id")
-    val customerId: String
+    val customerId: String,
+    @SerializedName("q")
+    val query: String? = null
 )
 
 data class ReportRequestDto(

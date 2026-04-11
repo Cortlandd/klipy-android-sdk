@@ -2,7 +2,9 @@ package com.klipy.sdk.data
 
 import com.klipy.sdk.model.Category
 import com.klipy.sdk.model.MediaData
+import com.klipy.sdk.model.MediaRequestOptions
 import com.klipy.sdk.model.MediaType
+import com.klipy.sdk.model.ShareTriggerOptions
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertSame
 import org.junit.Test
@@ -15,11 +17,14 @@ class MediaDataSourceSelectorTest {
     private class RecordingDataSource : MediaDataSource {
         var resetCount = 0
 
-        override suspend fun getCategories(): Result<List<Category>> {
+        override suspend fun getCategories(options: MediaRequestOptions): Result<List<Category>> {
             error("Not used in this test")
         }
 
-        override suspend fun getMediaData(filter: String): Result<MediaData> {
+        override suspend fun getMediaData(
+            filter: String,
+            options: MediaRequestOptions
+        ): Result<MediaData> {
             error("Not used in this test")
         }
 
@@ -27,7 +32,7 @@ class MediaDataSourceSelectorTest {
             error("Not used in this test")
         }
 
-        override suspend fun triggerShare(slug: String): Result<Any> {
+        override suspend fun triggerShare(slug: String, options: ShareTriggerOptions): Result<Any> {
             error("Not used in this test")
         }
 

@@ -5,7 +5,9 @@ import com.google.gson.GsonBuilder
 import com.klipy.sdk.data.*
 import com.klipy.sdk.model.Category
 import com.klipy.sdk.model.MediaData
+import com.klipy.sdk.model.MediaRequestOptions
 import com.klipy.sdk.model.MediaType
+import com.klipy.sdk.model.ShareTriggerOptions
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
@@ -109,30 +111,59 @@ private class KlipyRepositoryImpl(
         listOf(MediaType.GIF, MediaType.STICKER, MediaType.CLIP, MediaType.MEME)
 
     override suspend fun getCategories(mediaType: MediaType): Result<List<Category>> {
-        return mediaDataSourceSelector.getDataSource(mediaType).getCategories()
+        return getCategories(mediaType, MediaRequestOptions())
+    }
+
+    override suspend fun getCategories(
+        mediaType: MediaType,
+        options: MediaRequestOptions
+    ): Result<List<Category>> {
+        return mediaDataSourceSelector.getDataSource(mediaType).getCategories(options)
     }
 
     override suspend fun getTrending(mediaType: MediaType): Result<MediaData> {
+        return getTrending(mediaType, MediaRequestOptions())
+    }
+
+    override suspend fun getTrending(
+        mediaType: MediaType,
+        options: MediaRequestOptions
+    ): Result<MediaData> {
         return mediaDataSourceSelector
             .getDataSource(mediaType)
-            .getMediaData("trending")
+            .getMediaData("trending", options)
     }
 
     override suspend fun search(
         mediaType: MediaType,
         query: String
     ): Result<MediaData> {
+        return search(mediaType, query, MediaRequestOptions())
+    }
+
+    override suspend fun search(
+        mediaType: MediaType,
+        query: String,
+        options: MediaRequestOptions
+    ): Result<MediaData> {
         if (query.isBlank()) return Result.success(MediaData.EMPTY)
 
         return mediaDataSourceSelector
             .getDataSource(mediaType)
-            .getMediaData(query)
+            .getMediaData(query, options)
     }
 
     override suspend fun getRecent(mediaType: MediaType): Result<MediaData> {
+        return getRecent(mediaType, MediaRequestOptions())
+    }
+
+    override suspend fun getRecent(
+        mediaType: MediaType,
+        options: MediaRequestOptions
+    ): Result<MediaData> {
         return mediaDataSourceSelector
             .getDataSource(mediaType)
-            .getMediaData("recent")
+            .getMediaData("recent", options)
     }
 
     override suspend fun getItems(
@@ -149,12 +180,28 @@ private class KlipyRepositoryImpl(
         mediaType: MediaType,
         filter: String
     ): Result<MediaData> {
-        return mediaDataSourceSelector.getDataSource(mediaType).getMediaData(filter)
+        return getMedia(mediaType, filter, MediaRequestOptions())
+    }
+
+    override suspend fun getMedia(
+        mediaType: MediaType,
+        filter: String,
+        options: MediaRequestOptions
+    ): Result<MediaData> {
+        return mediaDataSourceSelector.getDataSource(mediaType).getMediaData(filter, options)
     }
 
     override suspend fun triggerShare(mediaType: MediaType, slug: String): Result<Unit> {
+        return triggerShare(mediaType, slug, ShareTriggerOptions())
+    }
+
+    override suspend fun triggerShare(
+        mediaType: MediaType,
+        slug: String,
+        options: ShareTriggerOptions
+    ): Result<Unit> {
         return mediaDataSourceSelector.getDataSource(mediaType)
-            .triggerShare(slug)
+            .triggerShare(slug, options)
             .map { Unit }
     }
 

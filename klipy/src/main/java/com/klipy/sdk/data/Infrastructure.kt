@@ -145,48 +145,61 @@ class AdsQueryParametersInterceptor(
         val builder = originalUrl.newBuilder()
             // TODO: This may need to change?
             // Unique user id in the app; demo uses device ID.
-            .addQueryParameter(CUSTOMER_ID, deviceInfoProvider.getDeviceId())
-            .addQueryParameter(LOCALE, Locale.getDefault().language)
-            .addQueryParameter(AD_MIN_WIDTH, "50")
-            .addQueryParameter(AD_MAX_WIDTH, screenMeasurementsProvider.mediaSelectorContainer.width.toString())
-            .addQueryParameter(AD_MIN_HEIGHT, "50")
-            .addQueryParameter(AD_MAX_HEIGHT, "200")
+            .apply {
+                addQueryParameterIfMissing(originalUrl, CUSTOMER_ID, deviceInfoProvider.getDeviceId())
+                addQueryParameterIfMissing(originalUrl, LOCALE, Locale.getDefault().language)
+                addQueryParameterIfMissing(originalUrl, AD_MIN_WIDTH, "50")
+                addQueryParameterIfMissing(
+                    originalUrl,
+                    AD_MAX_WIDTH,
+                    screenMeasurementsProvider.mediaSelectorContainer.width.toString()
+                )
+                addQueryParameterIfMissing(originalUrl, AD_MIN_HEIGHT, "50")
+                addQueryParameterIfMissing(originalUrl, AD_MAX_HEIGHT, "200")
+            }
             .apply {
                 advertisingInfoProvider.getAdvertisingId()?.let { ifa ->
-                    addQueryParameter(IFA, ifa)
+                    addQueryParameterIfMissing(originalUrl, IFA, ifa)
                 }
             }
-            .addQueryParameter(APP_VERSION, "1.0")
-            .addQueryParameter(OS, "Android")
-            .addQueryParameter(OS_VERSION, Build.VERSION.RELEASE)
-            .addQueryParameter(MANUFACTURER, Build.MANUFACTURER)
-            .addQueryParameter(MODEL, Build.MODEL)
-            .addQueryParameter(
-                AD_DEVICE_WIDTH,
-                screenMeasurementsProvider.device.width.toString()
-            )
-            .addQueryParameter(
-                AD_DEVICE_HEIGHT,
-                screenMeasurementsProvider.device.height.toString()
-            )
-            .addQueryParameter(
-                AD_PXRATIO,
-                screenMeasurementsProvider.getDensityScaleFactor().toString()
-            )
-            .addQueryParameter(AD_LANGUAGE, Locale.getDefault().language)
+            .apply {
+                addQueryParameterIfMissing(originalUrl, APP_VERSION, "1.0")
+                addQueryParameterIfMissing(originalUrl, OS, "Android")
+                addQueryParameterIfMissing(originalUrl, OS_VERSION, Build.VERSION.RELEASE)
+                addQueryParameterIfMissing(originalUrl, MANUFACTURER, Build.MANUFACTURER)
+                addQueryParameterIfMissing(originalUrl, MODEL, Build.MODEL)
+                addQueryParameterIfMissing(
+                    originalUrl,
+                    AD_DEVICE_WIDTH,
+                    screenMeasurementsProvider.device.width.toString()
+                )
+                addQueryParameterIfMissing(
+                    originalUrl,
+                    AD_DEVICE_HEIGHT,
+                    screenMeasurementsProvider.device.height.toString()
+                )
+                addQueryParameterIfMissing(
+                    originalUrl,
+                    AD_PXRATIO,
+                    screenMeasurementsProvider.getDensityScaleFactor().toString()
+                )
+                addQueryParameterIfMissing(originalUrl, AD_LANGUAGE, Locale.getDefault().language)
+            }
             .apply {
                 deviceInfoProvider.getCarrier()?.let { carrier ->
-                    addQueryParameter(AD_CARRIER, carrier)
+                    addQueryParameterIfMissing(originalUrl, AD_CARRIER, carrier)
                 }
             }
             .apply {
                 deviceInfoProvider.getNetworkOperator()?.let { op ->
-                    addQueryParameter(AD_MCCMNC, op)
+                    addQueryParameterIfMissing(originalUrl, AD_MCCMNC, op)
                 }
             }
             // Demo values; if you have real user profile data, you can adapt these.
-            .addQueryParameter(AD_YOB, "1980")
-            .addQueryParameter(AD_GENDER, "M")
+            .apply {
+                addQueryParameterIfMissing(originalUrl, AD_YOB, "1980")
+                addQueryParameterIfMissing(originalUrl, AD_GENDER, "M")
+            }
 
         val newUrl = builder.build()
 
@@ -198,6 +211,16 @@ class AdsQueryParametersInterceptor(
         }
 
         return chain.proceed(newRequestBuilder.build())
+    }
+
+    private fun okhttp3.HttpUrl.Builder.addQueryParameterIfMissing(
+        originalUrl: okhttp3.HttpUrl,
+        name: String,
+        value: String
+    ) {
+        if (originalUrl.queryParameter(name) == null) {
+            addQueryParameter(name, value)
+        }
     }
 
     private companion object {

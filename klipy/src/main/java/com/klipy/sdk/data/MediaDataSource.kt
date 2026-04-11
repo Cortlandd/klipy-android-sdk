@@ -1,17 +1,21 @@
 package com.klipy.sdk.data
 
 import com.klipy.sdk.model.Category
+import com.klipy.sdk.model.MediaRequestOptions
 import com.klipy.sdk.model.MediaData
 import com.klipy.sdk.model.MediaType
+import com.klipy.sdk.model.ShareTriggerOptions
+import com.klipy.sdk.model.contentFilterValue
+import com.klipy.sdk.model.formatFilterValue
 
 /**
  * Internal abstraction: a data source for a single media type (GIFs, Stickers, Clips).
  */
 internal interface MediaDataSource {
-    suspend fun getCategories(): Result<List<Category>>
-    suspend fun getMediaData(filter: String): Result<MediaData>
+    suspend fun getCategories(options: MediaRequestOptions): Result<List<Category>>
+    suspend fun getMediaData(filter: String, options: MediaRequestOptions): Result<MediaData>
     suspend fun getItems(ids: List<String>, slugs: List<String>): Result<MediaData>
-    suspend fun triggerShare(slug: String): Result<Any>
+    suspend fun triggerShare(slug: String, options: ShareTriggerOptions): Result<Any>
     suspend fun triggerView(slug: String): Result<Any>
     suspend fun report(slug: String, reason: String): Result<Any>
     suspend fun hideFromRecent(slug: String): Result<Any>
@@ -33,18 +37,19 @@ internal class MediaDataSourceImpl(
     deviceInfoProvider: DeviceInfoProvider
 ) : MediaDataSource {
 
-    private var categories = emptyList<Category>()
-    private val customerId: String = deviceInfoProvider.getDeviceId()
+    private val categoriesByLocale = mutableMapOf<String?, List<Category>>()
+    private val defaultCustomerId: String = deviceInfoProvider.getDeviceId()
 
     private var currentPage: Int = INITIAL_PAGE
-    private var currentFilter: String = ""
+    private var currentRequestKey: PagingRequestKey? = null
     private var canRequestMoreData: Boolean = true
 
-    override suspend fun getCategories(): Result<List<Category>> {
-        if (categories.isNotEmpty()) return Result.success(categories)
+    override suspend fun getCategories(options: MediaRequestOptions): Result<List<Category>> {
+        val locale = options.locale
+        categoriesByLocale[locale]?.let { return Result.success(it) }
 
         return apiCallHelper
-            .makeApiCall { mediaService.getCategories() }
+            .makeApiCall { mediaService.getCategories(locale) }
             .mapCatching { result ->
                 val list = result.data.categories.toMutableList()
                 val mapped = list.map { category ->
@@ -54,20 +59,32 @@ internal class MediaDataSourceImpl(
                         previewUrl = category.previewUrl
                     )
                 }
-                categories = mapped
+                categoriesByLocale[locale] = mapped
                 mapped
             }
     }
 
-    override suspend fun getMediaData(filter: String): Result<MediaData> {
+    override suspend fun getMediaData(
+        filter: String,
+        options: MediaRequestOptions
+    ): Result<MediaData> {
         if (filter.isEmpty()) return Result.success(MediaData.EMPTY)
 
-        if (filter != currentFilter) {
+        val resolvedOptions = options.resolve(defaultCustomerId)
+        val requestKey = PagingRequestKey(
+            filter = filter,
+            customerId = resolvedOptions.customerId,
+            locale = resolvedOptions.locale,
+            contentFilter = resolvedOptions.contentFilter,
+            formatFilter = resolvedOptions.formatFilter
+        )
+
+        if (requestKey != currentRequestKey) {
             // Filter changed; reset paging.
             currentPage = INITIAL_PAGE
             canRequestMoreData = true
+            currentRequestKey = requestKey
         }
-        currentFilter = filter
         currentPage++
 
         if (!canRequestMoreData) {
@@ -78,7 +95,7 @@ internal class MediaDataSourceImpl(
             .makeApiCall {
                 when (filter) {
                     RECENT -> mediaService.getRecent(
-                        customerId = customerId,
+                        customerId = resolvedOptions.customerId,
                         page = currentPage,
                         perPage = PER_PAGE
                     )
@@ -86,13 +103,19 @@ internal class MediaDataSourceImpl(
                     TRENDING -> mediaService.getTrending(
                         page = currentPage,
                         perPage = PER_PAGE,
-                        customerId = customerId
+                        customerId = resolvedOptions.customerId,
+                        locale = resolvedOptions.locale,
+                        formatFilter = resolvedOptions.formatFilter
                     )
 
                     else -> mediaService.search(
                         query = filter,
                         page = currentPage,
-                        perPage = PER_PAGE
+                        perPage = PER_PAGE,
+                        customerId = resolvedOptions.customerId,
+                        locale = resolvedOptions.locale,
+                        contentFilter = resolvedOptions.contentFilter,
+                        formatFilter = resolvedOptions.formatFilter
                     )
                 }
             }
@@ -138,28 +161,35 @@ internal class MediaDataSourceImpl(
 
     override fun reset() {
         currentPage = INITIAL_PAGE
-        currentFilter = ""
+        currentRequestKey = null
         canRequestMoreData = true
     }
 
-    override suspend fun triggerShare(slug: String): Result<Any> =
+    override suspend fun triggerShare(slug: String, options: ShareTriggerOptions): Result<Any> =
         apiCallHelper.makeApiCall {
-            mediaService.triggerShare(slug, TriggerViewRequestDto(customerId))
+            val resolvedOptions = options.resolve(defaultCustomerId)
+            mediaService.triggerShare(
+                slug,
+                TriggerViewRequestDto(
+                    customerId = resolvedOptions.customerId,
+                    query = resolvedOptions.searchQuery
+                )
+            )
         }
 
     override suspend fun triggerView(slug: String): Result<Any> =
         apiCallHelper.makeApiCall {
-            mediaService.triggerView(slug, TriggerViewRequestDto(customerId))
+            mediaService.triggerView(slug, TriggerViewRequestDto(defaultCustomerId))
         }
 
     override suspend fun report(slug: String, reason: String): Result<Any> =
         apiCallHelper.makeApiCall {
-            mediaService.report(slug, ReportRequestDto(customerId, reason))
+            mediaService.report(slug, ReportRequestDto(defaultCustomerId, reason))
         }
 
     override suspend fun hideFromRecent(slug: String): Result<Any> =
         apiCallHelper.makeApiCall {
-            mediaService.hideFromRecent(customerId, slug)
+            mediaService.hideFromRecent(defaultCustomerId, slug)
         }
 
     private fun String.toCategoryUrl(): String =
@@ -167,11 +197,45 @@ internal class MediaDataSourceImpl(
 
     private companion object {
         const val INITIAL_PAGE = 0
-        const val PER_PAGE = 50
+        const val PER_PAGE = 24
         const val RECENT = "recent"
         const val TRENDING = "trending"
     }
 }
+
+private data class ResolvedMediaRequestOptions(
+    val customerId: String,
+    val locale: String?,
+    val contentFilter: String?,
+    val formatFilter: String?
+)
+
+private fun MediaRequestOptions.resolve(defaultCustomerId: String): ResolvedMediaRequestOptions =
+    ResolvedMediaRequestOptions(
+        customerId = customerId ?: defaultCustomerId,
+        locale = locale,
+        contentFilter = contentFilterValue(),
+        formatFilter = formatFilterValue()
+    )
+
+private data class ResolvedShareTriggerOptions(
+    val customerId: String,
+    val searchQuery: String?
+)
+
+private fun ShareTriggerOptions.resolve(defaultCustomerId: String): ResolvedShareTriggerOptions =
+    ResolvedShareTriggerOptions(
+        customerId = customerId ?: defaultCustomerId,
+        searchQuery = searchQuery
+    )
+
+private data class PagingRequestKey(
+    val filter: String,
+    val customerId: String,
+    val locale: String?,
+    val contentFilter: String?,
+    val formatFilter: String?
+)
 
 /**
  * Chooses the correct [MediaDataSource] for a given [MediaType] and

@@ -12,7 +12,9 @@ import retrofit2.http.Query
  * General service interface – GIF, CLIP, STICKER services all share this structure.
  */
 interface MediaService {
-    suspend fun getCategories(): Response<CategoriesResponseDto>
+    suspend fun getCategories(
+        @Query("locale") locale: String?
+    ): Response<CategoriesResponseDto>
 
     suspend fun getRecent(
         @Path("customer_id") customerId: String,
@@ -23,13 +25,19 @@ interface MediaService {
     suspend fun getTrending(
         @Query("page") page: Int,
         @Query("per_page") perPage: Int,
-        @Query("customerId") customerId: String,
+        @Query("customer_id") customerId: String,
+        @Query("locale") locale: String?,
+        @Query("format_filter") formatFilter: String?,
     ): Response<MediaItemResponseDto>
 
     suspend fun search(
         @Query("q") query: String,
         @Query("page") page: Int,
-        @Query("per_page") perPage: Int
+        @Query("per_page") perPage: Int,
+        @Query("customer_id") customerId: String,
+        @Query("locale") locale: String?,
+        @Query("content_filter") contentFilter: String?,
+        @Query("format_filter") formatFilter: String?,
     ): Response<MediaItemResponseDto>
 
     suspend fun getItems(
@@ -64,7 +72,9 @@ interface MediaService {
 interface GifService : MediaService {
 
     @GET("gifs/categories")
-    override suspend fun getCategories(): Response<CategoriesResponseDto>
+    override suspend fun getCategories(
+        @Query("locale") locale: String?
+    ): Response<CategoriesResponseDto>
 
     @GET("gifs/recent/{customer_id}")
     @AdsQueryParameters
@@ -79,7 +89,9 @@ interface GifService : MediaService {
     override suspend fun getTrending(
         @Query("page") page: Int,
         @Query("per_page") perPage: Int,
-        @Query("customerId") customerId: String,
+        @Query("customer_id") customerId: String,
+        @Query("locale") locale: String?,
+        @Query("format_filter") formatFilter: String?,
     ): Response<MediaItemResponseDto>
 
     @GET("gifs/search")
@@ -87,7 +99,11 @@ interface GifService : MediaService {
     override suspend fun search(
         @Query("q") query: String,
         @Query("page") page: Int,
-        @Query("per_page") perPage: Int
+        @Query("per_page") perPage: Int,
+        @Query("customer_id") customerId: String,
+        @Query("locale") locale: String?,
+        @Query("content_filter") contentFilter: String?,
+        @Query("format_filter") formatFilter: String?,
     ): Response<MediaItemResponseDto>
 
     @GET("gifs/items")
@@ -127,7 +143,9 @@ interface GifService : MediaService {
 interface StickersService : MediaService {
 
     @GET("stickers/categories")
-    override suspend fun getCategories(): Response<CategoriesResponseDto>
+    override suspend fun getCategories(
+        @Query("locale") locale: String?
+    ): Response<CategoriesResponseDto>
 
     @GET("stickers/recent/{customer_id}")
     @AdsQueryParameters
@@ -142,7 +160,9 @@ interface StickersService : MediaService {
     override suspend fun getTrending(
         @Query("page") page: Int,
         @Query("per_page") perPage: Int,
-        @Query("customerId") customerId: String,
+        @Query("customer_id") customerId: String,
+        @Query("locale") locale: String?,
+        @Query("format_filter") formatFilter: String?,
     ): Response<MediaItemResponseDto>
 
     @GET("stickers/search")
@@ -150,7 +170,17 @@ interface StickersService : MediaService {
     override suspend fun search(
         @Query("q") query: String,
         @Query("page") page: Int,
-        @Query("per_page") perPage: Int
+        @Query("per_page") perPage: Int,
+        @Query("customer_id") customerId: String,
+        @Query("locale") locale: String?,
+        @Query("content_filter") contentFilter: String?,
+        @Query("format_filter") formatFilter: String?,
+    ): Response<MediaItemResponseDto>
+
+    @GET("stickers/items")
+    override suspend fun getItems(
+        @Query("ids") ids: String,
+        @Query("slugs") slugs: String,
     ): Response<MediaItemResponseDto>
 
     @POST("stickers/share/{slug}")
@@ -184,7 +214,9 @@ interface StickersService : MediaService {
 interface ClipsService : MediaService {
 
     @GET("clips/categories")
-    override suspend fun getCategories(): Response<CategoriesResponseDto>
+    override suspend fun getCategories(
+        @Query("locale") locale: String?
+    ): Response<CategoriesResponseDto>
 
     @GET("clips/recent/{customer_id}")
     @AdsQueryParameters
@@ -199,7 +231,9 @@ interface ClipsService : MediaService {
     override suspend fun getTrending(
         @Query("page") page: Int,
         @Query("per_page") perPage: Int,
-        @Query("customerId") customerId: String,
+        @Query("customer_id") customerId: String,
+        @Query("locale") locale: String?,
+        @Query("format_filter") formatFilter: String?,
     ): Response<MediaItemResponseDto>
 
     @GET("clips/search")
@@ -207,7 +241,17 @@ interface ClipsService : MediaService {
     override suspend fun search(
         @Query("q") query: String,
         @Query("page") page: Int,
-        @Query("per_page") perPage: Int
+        @Query("per_page") perPage: Int,
+        @Query("customer_id") customerId: String,
+        @Query("locale") locale: String?,
+        @Query("content_filter") contentFilter: String?,
+        @Query("format_filter") formatFilter: String?,
+    ): Response<MediaItemResponseDto>
+
+    @GET("clips/items")
+    override suspend fun getItems(
+        @Query("ids") ids: String,
+        @Query("slugs") slugs: String,
     ): Response<MediaItemResponseDto>
 
     @POST("clips/share/{slug}")
@@ -241,7 +285,9 @@ interface ClipsService : MediaService {
 interface MemesService : MediaService {
 
     @GET("static-memes/categories")
-    override suspend fun getCategories(): Response<CategoriesResponseDto>
+    override suspend fun getCategories(
+        @Query("locale") locale: String?
+    ): Response<CategoriesResponseDto>
 
     @GET("static-memes/recent/{customer_id}")
     @AdsQueryParameters
@@ -256,7 +302,9 @@ interface MemesService : MediaService {
     override suspend fun getTrending(
         @Query("page") page: Int,
         @Query("per_page") perPage: Int,
-        @Query("customerId") customerId: String,
+        @Query("customer_id") customerId: String,
+        @Query("locale") locale: String?,
+        @Query("format_filter") formatFilter: String?,
     ): Response<MediaItemResponseDto>
 
     @GET("static-memes/search")
@@ -264,7 +312,17 @@ interface MemesService : MediaService {
     override suspend fun search(
         @Query("q") query: String,
         @Query("page") page: Int,
-        @Query("per_page") perPage: Int
+        @Query("per_page") perPage: Int,
+        @Query("customer_id") customerId: String,
+        @Query("locale") locale: String?,
+        @Query("content_filter") contentFilter: String?,
+        @Query("format_filter") formatFilter: String?,
+    ): Response<MediaItemResponseDto>
+
+    @GET("static-memes/items")
+    override suspend fun getItems(
+        @Query("ids") ids: String,
+        @Query("slugs") slugs: String,
     ): Response<MediaItemResponseDto>
 
     @POST("static-memes/share/{slug}")
