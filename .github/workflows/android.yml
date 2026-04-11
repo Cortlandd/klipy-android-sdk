@@ -31,5 +31,8 @@ jobs:
       - name: Set up the Android SDK
         uses: android-actions/setup-android@v3
 
+      - name: Make the Gradle wrapper executable
+        run: chmod +x ./gradlew
+
       - name: Verify the SDK and sample apps
         run: ./gradlew :klipy:test :klipy:assembleRelease :klipy-ui:assembleRelease :app:compileDebugKotlin :demo:compileDebugKotlin
