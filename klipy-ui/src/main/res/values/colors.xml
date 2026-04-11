@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="klipy_skeleton_grey">#FFDDDDDD</color>
+    <color name="klipy_footer_divider">#FFD6D6D6</color>
 </resources>

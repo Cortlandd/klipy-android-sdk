@@ -1,7 +1,10 @@
 package com.klipy.klipy_ui.picker
 
+import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.DialogInterface
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.view.*
 import android.view.inputmethod.EditorInfo
@@ -61,6 +64,7 @@ import kotlinx.coroutines.launch
 class KlipyPickerDialogFragment : BottomSheetDialogFragment() {
 
     companion object {
+        private val KLIPY_WEBSITE_URI: Uri = Uri.parse("https://klipy.com/en-US")
         private const val ARG_CONFIG = "klipy_config"
         private const val ARG_SECRET_KEY = "klipy_secret_key"
         private const val ARG_BASE_API_URL = "klipy_base_api_url"
@@ -180,6 +184,7 @@ class KlipyPickerDialogFragment : BottomSheetDialogFragment() {
         setupTabs()
         setupRecycler()
         setupSearch()
+        setupPoweredByFooter()
 
         // Set initial media type but do NOT auto-load
         val initialType = config.initialMediaType
@@ -277,6 +282,24 @@ class KlipyPickerDialogFragment : BottomSheetDialogFragment() {
             } else {
                 false
             }
+        }
+    }
+
+    private fun setupPoweredByFooter() {
+        binding.footerPoweredBy.setOnClickListener {
+            openKlipyWebsite()
+        }
+    }
+
+    private fun openKlipyWebsite() {
+        val intent = Intent(Intent.ACTION_VIEW, KLIPY_WEBSITE_URI).apply {
+            addCategory(Intent.CATEGORY_BROWSABLE)
+        }
+
+        try {
+            startActivity(intent)
+        } catch (_: ActivityNotFoundException) {
+            // Ignore devices without a browser handler.
         }
     }
 
