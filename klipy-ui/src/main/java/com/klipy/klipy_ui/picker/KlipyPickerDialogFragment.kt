@@ -8,6 +8,7 @@ import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.net.Uri
 import android.os.Bundle
+import android.view.KeyEvent
 import android.view.*
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
@@ -265,10 +266,8 @@ class KlipyPickerDialogFragment : BottomSheetDialogFragment() {
     private fun setupSearch() {
         val edit = binding.inputSearch
 
-        edit.setOnEditorActionListener { v, actionId, _ ->
-            if (actionId == EditorInfo.IME_ACTION_SEARCH ||
-                actionId == EditorInfo.IME_NULL
-            ) {
+        edit.setOnEditorActionListener { v, actionId, event ->
+            if (shouldSubmitSearch(actionId, event)) {
                 val term = v.text?.toString()?.trim().orEmpty()
                 val newTerm = term.takeIf { it.isNotEmpty() }
 
@@ -286,6 +285,16 @@ class KlipyPickerDialogFragment : BottomSheetDialogFragment() {
                 false
             }
         }
+    }
+
+    private fun shouldSubmitSearch(actionId: Int, event: KeyEvent?): Boolean {
+        if (actionId == EditorInfo.IME_ACTION_SEARCH) {
+            return true
+        }
+
+        return actionId == EditorInfo.IME_NULL &&
+            event?.keyCode == KeyEvent.KEYCODE_ENTER &&
+            event.action == KeyEvent.ACTION_DOWN
     }
 
     private fun setupRetry() {

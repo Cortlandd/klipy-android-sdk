@@ -21,7 +21,8 @@
             android:layout_height="wrap_content"
             android:hint="Search Klipy"
             android:imeOptions="actionSearch"
-            android:inputType="text" />
+            android:inputType="text"
+            android:maxLines="1" />
     </com.google.android.material.textfield.TextInputLayout>
 
     <FrameLayout
