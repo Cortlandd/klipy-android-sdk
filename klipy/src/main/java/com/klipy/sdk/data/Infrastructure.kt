@@ -203,14 +203,11 @@ class AdsQueryParametersInterceptor(
 
         val newUrl = builder.build()
 
-        val newRequestBuilder = originalRequest.newBuilder()
-            .url(newUrl)
-
-        deviceInfoProvider.getUserAgent()?.let { ua ->
-            newRequestBuilder.header(USER_AGENT, ua)
-        }
-
-        return chain.proceed(newRequestBuilder.build())
+        return chain.proceed(
+            originalRequest.newBuilder()
+                .url(newUrl)
+                .build()
+        )
     }
 
     private fun okhttp3.HttpUrl.Builder.addQueryParameterIfMissing(
@@ -229,7 +226,6 @@ class AdsQueryParametersInterceptor(
         const val AD_MAX_WIDTH = "ad-max-width"
         const val AD_MIN_HEIGHT = "ad-min-height"
         const val AD_MAX_HEIGHT = "ad-max-height"
-        const val USER_AGENT = "User-Agent"
         const val APP_VERSION = "ad-app-version"
         const val OS = "ad-os"
         const val OS_VERSION = "ad-osv"
@@ -245,5 +241,40 @@ class AdsQueryParametersInterceptor(
         const val AD_CARRIER = "ad-carrier"
         const val AD_MCCMNC = "ad-mccmnc"
         const val AD_LANGUAGE = "ad-language"
+    }
+}
+
+internal class SdkIdentificationInterceptor(
+    private val deviceInfoProvider: DeviceInfoProvider
+) : Interceptor {
+
+    override fun intercept(chain: Interceptor.Chain): Response {
+        val originalRequest = chain.request()
+
+        if (originalRequest.header(USER_AGENT) != null) {
+            return chain.proceed(originalRequest)
+        }
+
+        val resolvedUserAgent = buildUserAgent(deviceInfoProvider.getUserAgent())
+
+        return chain.proceed(
+            originalRequest.newBuilder()
+                .header(USER_AGENT, resolvedUserAgent)
+                .build()
+        )
+    }
+
+    private fun buildUserAgent(deviceUserAgent: String?): String {
+        val trimmedDeviceUserAgent = deviceUserAgent?.trim().orEmpty()
+        return if (trimmedDeviceUserAgent.isEmpty()) {
+            SDK_USER_AGENT
+        } else {
+            "$SDK_USER_AGENT $trimmedDeviceUserAgent"
+        }
+    }
+
+    private companion object {
+        const val USER_AGENT = "User-Agent"
+        const val SDK_USER_AGENT = "klipy-android-sdk (Android; community SDK)"
     }
 }

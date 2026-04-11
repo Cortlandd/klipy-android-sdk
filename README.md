@@ -52,6 +52,12 @@ For the included sample apps, set your API key in `~/.gradle/gradle.properties`:
 KLIPY_API_KEY=your_klipy_app_key
 ```
 
+The SDK also sends a standard `User-Agent` header on API requests so Klipy can identify traffic coming from this community-maintained Android SDK. By default it uses:
+
+`klipy-android-sdk (Android; community SDK)`
+
+When the device exposes a browser/WebView user agent, the SDK appends it after that identifier for compatibility with Klipy's advertisement and diagnostics flows.
+
 ## Migrating From Tenor
 
 Klipy's live migration guidance is straightforward:
