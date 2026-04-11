@@ -32,9 +32,9 @@ dependencyResolutionManagement {
 ```kotlin
 // app/build.gradle.kts
 dependencies {
-    implementation("com.github.Cortlandd:klipy-android-sdk:klipy:0.1.11")
+    implementation("com.github.Cortlandd.klipy-android-sdk:klipy:0.1.11")
     // If you want the ready-made picker fragment, klipy-ui already depends on klipy.
-    implementation("com.github.Cortlandd:klipy-android-sdk:klipy-ui:0.1.11")
+    implementation("com.github.Cortlandd.klipy-android-sdk:klipy-ui:0.1.11")
 }
 ```
 Or
@@ -47,6 +47,10 @@ dependencies {
     implementation(project(":klipy-ui"))
 }
 ```
+
+For JitPack, this repo publishes `klipy` and `klipy-ui` as module artifacts, so the correct coordinates use:
+
+`com.github.Cortlandd.klipy-android-sdk:<module>:<version>`
 
 For the included sample apps, set your API key in `~/.gradle/gradle.properties`:
 ```properties

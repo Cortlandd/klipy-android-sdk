@@ -4,7 +4,9 @@ This changelog tracks the Klipy Android SDK release history and the commit-level
 
 ## [Unreleased]
 
-- No unreleased changes yet.
+- Add the Klipy test API key as the committed sample app fallback.
+  Commit: `13b3552`
+- Fix the README JitPack coordinates for `klipy` and `klipy-ui`.
 
 ## [0.1.11] - 2026-04-11
 
