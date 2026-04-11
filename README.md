@@ -2,7 +2,7 @@
 
 # Klipy Android SDK
 
-[![License](https://img.shields.io/cocoapods/l/SwiftChess.svg?style=flat)](https://github.com/Cortlandd/klipy-android-sdk/blob/master/LICENSE.md)
+[License: Custom Attribution](LICENSE.md)
 
 An Android SDK wrapping the [Klipy](https://klipy.com) API to drop a GIF, Sticker, Clip, or Meme into your Android app with a single SDK.
 
@@ -81,6 +81,11 @@ dependencies {
     // Optional UI layer: picker dialog, adapter, etc.
     implementation(project(":klipy-ui"))
 }
+```
+
+For the included sample apps, set your API key in `~/.gradle/gradle.properties`:
+```properties
+KLIPY_API_KEY=your_klipy_app_key
 ```
 
 ## Migrating From Tenor
