@@ -10,6 +10,7 @@ Latest platform references:
 - Docs: [docs.klipy.com](https://docs.klipy.com)
 - API keys / production access: [partner.klipy.com](https://partner.klipy.com/api-keys)
 - Attribution notice: [NOTICE](NOTICE)
+- Release history: [CHANGELOG.md](CHANGELOG.md)
 
 ---
 
