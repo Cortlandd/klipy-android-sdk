@@ -13,6 +13,7 @@ import android.view.*
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
 import androidx.core.os.bundleOf
+import androidx.core.widget.addTextChangedListener
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -29,6 +30,7 @@ import com.klipy.sdk.model.MediaItem
 import com.klipy.sdk.model.MediaType
 import com.klipy.sdk.model.singularName
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /**
@@ -68,6 +70,7 @@ class KlipyPickerDialogFragment : BottomSheetDialogFragment() {
 
     companion object {
         private val KLIPY_WEBSITE_URI: Uri = Uri.parse("https://klipy.com/en-US")
+        private const val SEARCH_DEBOUNCE_MS = 350L
         private const val ARG_CONFIG = "klipy_config"
         private const val ARG_SECRET_KEY = "klipy_secret_key"
         private const val ARG_BASE_API_URL = "klipy_base_api_url"
@@ -142,6 +145,8 @@ class KlipyPickerDialogFragment : BottomSheetDialogFragment() {
     private var isLoading = false
     private var hasMore = true
     private var loadJob: Job? = null
+    private var searchDebounceJob: Job? = null
+    private var suppressSearchTextChanges = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -205,6 +210,7 @@ class KlipyPickerDialogFragment : BottomSheetDialogFragment() {
     }
 
     override fun onDestroyView() {
+        searchDebounceJob?.cancel()
         super.onDestroyView()
         _binding = null
     }
@@ -266,20 +272,29 @@ class KlipyPickerDialogFragment : BottomSheetDialogFragment() {
     private fun setupSearch() {
         val edit = binding.inputSearch
 
+        edit.addTextChangedListener { text ->
+            if (suppressSearchTextChanges) return@addTextChangedListener
+
+            val term = text?.toString().orEmpty()
+            searchDebounceJob?.cancel()
+            searchDebounceJob = viewLifecycleOwner.lifecycleScope.launch {
+                delay(SEARCH_DEBOUNCE_MS)
+                applySearchTerm(term, hideKeyboard = false)
+            }
+        }
+
+        edit.setOnKeyListener { v, keyCode, event ->
+            if (keyCode == KeyEvent.KEYCODE_ENTER && event.action == KeyEvent.ACTION_DOWN) {
+                submitSearch(v)
+                true
+            } else {
+                false
+            }
+        }
+
         edit.setOnEditorActionListener { v, actionId, event ->
             if (shouldSubmitSearch(actionId, event)) {
-                val term = v.text?.toString()?.trim().orEmpty()
-                val newTerm = term.takeIf { it.isNotEmpty() }
-
-                currentFilter = newTerm
-                newTerm?.let { listener?.didSearchTerm(it) }
-
-                // Hide keyboard
-                val imm = requireContext()
-                    .getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
-                imm.hideSoftInputFromWindow(v.windowToken, 0)
-
-                startNewSearch()
+                submitSearch(v)
                 true
             } else {
                 false
@@ -288,13 +303,50 @@ class KlipyPickerDialogFragment : BottomSheetDialogFragment() {
     }
 
     private fun shouldSubmitSearch(actionId: Int, event: KeyEvent?): Boolean {
-        if (actionId == EditorInfo.IME_ACTION_SEARCH) {
+        if (
+            actionId == EditorInfo.IME_ACTION_SEARCH ||
+            actionId == EditorInfo.IME_ACTION_DONE ||
+            actionId == EditorInfo.IME_ACTION_GO
+        ) {
             return true
         }
 
         return actionId == EditorInfo.IME_NULL &&
             event?.keyCode == KeyEvent.KEYCODE_ENTER &&
             event.action == KeyEvent.ACTION_DOWN
+    }
+
+    private fun submitSearch(view: View) {
+        searchDebounceJob?.cancel()
+        applySearchTerm(
+            rawTerm = binding.inputSearch.text?.toString().orEmpty(),
+            hideKeyboard = true
+        )
+        hideKeyboard(view)
+    }
+
+    private fun applySearchTerm(rawTerm: String, hideKeyboard: Boolean) {
+        val normalizedTerm = rawTerm.trim()
+        val newTerm = normalizedTerm.takeIf { it.isNotEmpty() }
+
+        currentFilter = newTerm
+        newTerm?.let { listener?.didSearchTerm(it) }
+
+        if (hideKeyboard) {
+            hideKeyboard(binding.inputSearch)
+        }
+
+        if (newTerm != null) {
+            startNewSearch()
+        } else {
+            showDefaultFeed()
+        }
+    }
+
+    private fun hideKeyboard(view: View) {
+        val imm = requireContext()
+            .getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+        imm.hideSoftInputFromWindow(view.windowToken, 0)
     }
 
     private fun setupRetry() {
@@ -429,14 +481,29 @@ class KlipyPickerDialogFragment : BottomSheetDialogFragment() {
 
     private fun showTrending() {
         currentFilter = "trending" // maps to TRENDING in MediaDataSource
-        binding.inputSearch.setText("")
+        updateSearchField("")
         startNewSearch()
     }
 
     private fun showRecents() {
         currentFilter = "recent" // maps to RECENT in MediaDataSource
-        binding.inputSearch.setText("")
+        updateSearchField("")
         startNewSearch()
+    }
+
+    private fun showDefaultFeed() {
+        when {
+            config.showTrending -> showTrending()
+            config.showRecents -> showRecents()
+            else -> clearItems()
+        }
+    }
+
+    private fun updateSearchField(value: String) {
+        suppressSearchTextChanges = true
+        binding.inputSearch.setText(value)
+        binding.inputSearch.setSelection(value.length)
+        suppressSearchTextChanges = false
     }
 
     private fun onItemClicked(item: MediaItem) {
