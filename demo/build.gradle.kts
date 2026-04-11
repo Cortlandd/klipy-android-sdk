@@ -14,7 +14,8 @@ android {
     namespace = "com.klipy.conversationdemo"
     compileSdk = 36
 
-    val klipyApiKey = providers.gradleProperty("KLIPY_API_KEY").orElse("")
+    val klipyApiKey = providers.gradleProperty("KLIPY_API_KEY")
+        .orElse("gBAJiSCmnYiDLeGoUSBddk8FwuWFaLDMJ24vUBlalQS4IkCoBpznFZPZpBj1QZfh")
 
     defaultConfig {
         applicationId = "com.klipy.conversationdemo"
