@@ -4,7 +4,12 @@ This changelog tracks the Klipy Android SDK release history and the commit-level
 
 ## [Unreleased]
 
-- Debounce picker searches while typing and support more reliable Enter-key submission across keyboards.
+- No unreleased changes yet.
+
+## [0.1.11] - 2026-04-11
+
+- Debounce picker searches while typing and handle Enter consistently.
+  Commit: `f52914e`
 
 ## [0.1.10] - 2026-04-11
 
