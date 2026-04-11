@@ -2,6 +2,7 @@ package com.klipy.sdk.data
 
 import com.klipy.sdk.model.MediaType
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Test
 
@@ -39,6 +40,8 @@ class MediaItemMapperClipTest {
         )
 
         val result = mapper.mapToDomain(dto)
+        assertNotNull(result)
+        requireNotNull(result)
 
         assertEquals("awesome-clip", result.id)
         assertEquals(MediaType.CLIP, result.mediaType)
@@ -55,5 +58,34 @@ class MediaItemMapperClipTest {
         assertEquals("https://cdn.example.com/clip/preview.mp4", result.highQualityMetaData!!.url)
         assertEquals(400, result.highQualityMetaData!!.width)
         assertEquals(300, result.highQualityMetaData!!.height)
+    }
+
+    @Test
+    fun `mapToDomain falls back to the preview asset when clip selector data is missing`() {
+        val dto = MediaItemDto.ClipMediaItemDto(
+            slug = "preview-only-clip",
+            title = "Preview only clip",
+            fileMeta = FileTypesDto(
+                mp4 = FileMetaDataDto(
+                    url = "https://cdn.example.com/clip/preview.mp4",
+                    width = 400,
+                    height = 300
+                )
+            ),
+            file = ClipFileDto(
+                gif = null,
+                mp4 = "https://cdn.example.com/clip/preview.mp4",
+                webp = null
+            ),
+            type = "clip"
+        )
+
+        val result = mapper.mapToDomain(dto)
+        assertNotNull(result)
+        requireNotNull(result)
+
+        assertEquals("preview-only-clip", result.id)
+        assertEquals("https://cdn.example.com/clip/preview.mp4", result.lowQualityMetaData?.url)
+        assertEquals("https://cdn.example.com/clip/preview.mp4", result.highQualityMetaData?.url)
     }
 }

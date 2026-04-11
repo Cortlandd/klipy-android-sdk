@@ -12,40 +12,35 @@ import java.util.UUID
  * Maps network DTOs into SDK domain models.
  */
 internal interface MediaItemMapper {
-    fun mapToDomain(data: MediaItemDto): MediaItem
+    fun mapToDomain(data: MediaItemDto): MediaItem?
 }
 
 internal class MediaItemMapperImpl : MediaItemMapper {
 
-    override fun mapToDomain(data: MediaItemDto): MediaItem {
+    override fun mapToDomain(data: MediaItemDto): MediaItem? {
         return when (data) {
             is MediaItemDto.ClipMediaItemDto -> {
-                val selectorMeta = data.file?.gif?.let { url ->
-                    MetaData(
-                        url = url,
-                        width = data.fileMeta!!.gif!!.width!!,
-                        height = data.fileMeta.gif.height!!
-                    )
-                }
-                val previewMeta = data.file?.mp4?.let { url ->
-                    MetaData(
-                        url = url,
-                        width = data.fileMeta!!.mp4!!.width!!,
-                        height = data.fileMeta.mp4.height!!
-                    )
-                }
+                val slug = data.slug?.takeIf { it.isNotBlank() } ?: return null
+                val selectorMeta = data.fileMeta?.gif?.toDomain(data.file?.gif)
+                val previewMeta = data.fileMeta?.mp4?.toDomain(data.file?.mp4)
+                val lowMeta = selectorMeta ?: previewMeta
+                val highMeta = previewMeta ?: selectorMeta
+
+                if (lowMeta == null && highMeta == null) return null
 
                 MediaItem(
-                    id = data.slug!!,
+                    id = slug,
                     title = data.title,
                     blurPreview = data.blurPreview?.base64ToBitmap(),
-                    lowQualityMetaData = selectorMeta,
-                    highQualityMetaData = previewMeta,
-                    mediaType = MediaType.CLIP
+                    lowQualityMetaData = lowMeta,
+                    highQualityMetaData = highMeta,
+                    mediaType = MediaType.CLIP,
+                    tags = data.tags.orEmpty()
                 )
             }
 
             is MediaItemDto.GeneralMediaItemDto -> {
+                val slug = data.slug?.takeIf { it.isNotBlank() } ?: return null
                 val normalizedType = data.type?.lowercase()
 
                 val (lowFile, highFile) = data.file?.let { dims ->
@@ -56,28 +51,36 @@ internal class MediaItemMapperImpl : MediaItemMapper {
 
                 val lowMetaDto = pickStaticSource(normalizedType, lowFile)
                 val highMetaDto = pickStaticSource(normalizedType, highFile)
+                val lowMeta = lowMetaDto?.toDomain()
+                val highMeta = highMetaDto?.toDomain()
+                val resolvedLowMeta = lowMeta ?: highMeta
+                val resolvedHighMeta = highMeta ?: lowMeta
+
+                if (resolvedLowMeta == null && resolvedHighMeta == null) return null
 
                 MediaItem(
-                    id = data.slug!!,
+                    id = slug,
                     title = data.title,
                     blurPreview = data.blurPreview?.base64ToBitmap(),
-                    lowQualityMetaData = lowMetaDto?.toDomain(),
-                    highQualityMetaData = highMetaDto?.toDomain(),
+                    lowQualityMetaData = resolvedLowMeta,
+                    highQualityMetaData = resolvedHighMeta,
                     mediaType = when (normalizedType) {
                         "gif" -> MediaType.GIF
                         "sticker" -> MediaType.STICKER
                         "meme", "static-meme", "static-memes" -> MediaType.MEME
                         else -> MediaType.GIF
-                    }
+                    },
+                    tags = data.tags.orEmpty()
                 )
             }
 
             is MediaItemDto.AdMediaItemDto -> {
-                val meta = MetaData(
-                    url = data.content!!,
-                    width = data.width!!,
-                    height = data.height!!
-                )
+                val meta = createMetaData(
+                    url = data.content,
+                    width = data.width,
+                    height = data.height
+                ) ?: return null
+
                 MediaItem(
                     id = "ad-${UUID.randomUUID()}",
                     title = null,
@@ -104,12 +107,28 @@ internal class MediaItemMapperImpl : MediaItemMapper {
         }
     }
 
-    private fun FileMetaDataDto.toDomain(): MetaData =
-        MetaData(
-            url = url!!,
-            width = width!!,
-            height = height!!
+    private fun FileMetaDataDto.toDomain(overrideUrl: String? = null): MetaData? =
+        createMetaData(
+            url = overrideUrl ?: url,
+            width = width,
+            height = height
         )
+
+    private fun createMetaData(
+        url: String?,
+        width: Int?,
+        height: Int?
+    ): MetaData? {
+        val resolvedUrl = url?.takeIf { it.isNotBlank() } ?: return null
+        val resolvedWidth = width?.takeIf { it > 0 } ?: return null
+        val resolvedHeight = height?.takeIf { it > 0 } ?: return null
+
+        return MetaData(
+            url = resolvedUrl,
+            width = resolvedWidth,
+            height = resolvedHeight
+        )
+    }
 }
 
 /**

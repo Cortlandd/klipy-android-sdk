@@ -124,7 +124,7 @@ internal class MediaDataSourceImpl(
                 canRequestMoreData = data?.hasNext == true
 
                 MediaData(
-                    mediaItems = data?.data?.map { dto ->
+                    mediaItems = data?.data?.mapNotNull { dto ->
                         mediaItemMapper.mapToDomain(dto)
                     } ?: emptyList(),
                     itemMinWidth = data?.meta?.itemMinWidth ?: 0,
@@ -152,7 +152,7 @@ internal class MediaDataSourceImpl(
             .mapCatching { response ->
                 val data = response.data
                 MediaData(
-                    mediaItems = data?.data?.map(mediaItemMapper::mapToDomain) ?: emptyList(),
+                    mediaItems = data?.data?.mapNotNull(mediaItemMapper::mapToDomain) ?: emptyList(),
                     itemMinWidth = data?.meta?.itemMinWidth ?: 0,
                     adMaxResizePercentage = (data?.meta?.adMaxResizePercentage ?: 0) / 100f
                 )

@@ -2,6 +2,7 @@ package com.klipy.sdk.data
 
 import com.klipy.sdk.model.MediaType
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Test
 
@@ -38,6 +39,8 @@ class MediaItemMapperGifStickerTest {
         )
 
         val result = mapper.mapToDomain(dto)
+        assertNotNull(result)
+        requireNotNull(result)
 
         assertEquals("funny-cat", result.id)
         assertEquals(MediaType.GIF, result.mediaType)
@@ -75,6 +78,8 @@ class MediaItemMapperGifStickerTest {
         )
 
         val result = mapper.mapToDomain(dto)
+        assertNotNull(result)
+        requireNotNull(result)
 
         assertEquals("party-hat", result.id)
         assertEquals(MediaType.STICKER, result.mediaType)
@@ -89,5 +94,38 @@ class MediaItemMapperGifStickerTest {
         assertEquals("https://cdn.example.com/sticker/hd.webp", result.highQualityMetaData!!.url)
         assertEquals(512, result.lowQualityMetaData!!.width)
         assertEquals(512, result.highQualityMetaData!!.width)
+    }
+
+    @Test
+    fun `mapToDomain returns null when general media item has no usable id or files`() {
+        val missingSlug = MediaItemDto.GeneralMediaItemDto(
+            slug = null,
+            file = DimensionsDto(
+                md = FileTypesDto(
+                    gif = FileMetaDataDto(
+                        url = "https://cdn.example.com/gif/md.gif",
+                        width = 200,
+                        height = 150
+                    )
+                )
+            ),
+            type = "gif"
+        )
+        val missingFiles = MediaItemDto.GeneralMediaItemDto(
+            slug = "broken-item",
+            file = DimensionsDto(
+                md = FileTypesDto(
+                    gif = FileMetaDataDto(
+                        url = "",
+                        width = 0,
+                        height = 150
+                    )
+                )
+            ),
+            type = "gif"
+        )
+
+        assertNull(mapper.mapToDomain(missingSlug))
+        assertNull(mapper.mapToDomain(missingFiles))
     }
 }

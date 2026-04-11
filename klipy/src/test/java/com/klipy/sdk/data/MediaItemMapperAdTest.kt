@@ -21,6 +21,8 @@ class MediaItemMapperAdTest {
         )
 
         val result = mapper.mapToDomain(dto)
+        assertNotNull(result)
+        requireNotNull(result)
 
         assertTrue("Id must start with ad-", result.id.startsWith("ad-"))
         assertEquals(MediaType.AD, result.mediaType)
@@ -34,5 +36,17 @@ class MediaItemMapperAdTest {
         assertEquals("https://ads.example.com/creative.html", result.lowQualityMetaData!!.url)
         assertEquals(300, result.lowQualityMetaData!!.width)
         assertEquals(250, result.lowQualityMetaData!!.height)
+    }
+
+    @Test
+    fun `mapToDomain returns null when ad dto is missing required metadata`() {
+        val dto = MediaItemDto.AdMediaItemDto(
+            width = 300,
+            height = null,
+            content = null,
+            type = "ad"
+        )
+
+        assertNull(mapper.mapToDomain(dto))
     }
 }
