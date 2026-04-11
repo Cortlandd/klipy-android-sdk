@@ -263,7 +263,5 @@ You find an issue, open an issue
 
 # FAQ
 Q: Do I have to use the UI module?
-A: No. You can use `KlipySdk.create(...)` + `KlipyRepository` directly and build a custom UI on top of `MediaItem`.
 
-Q: Gonna do ios also?
-A: Probably.
+A: No. You can use `KlipySdk.create(...)` + `KlipyRepository` directly and build a custom UI on top of `MediaItem`.
