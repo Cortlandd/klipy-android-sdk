@@ -2,13 +2,14 @@
 
 # Klipy Android SDK
 
-[License: Custom Attribution](LICENSE.md)
+[License: Apache-2.0](LICENSE.md)
 
 An Android SDK wrapping the [Klipy](https://klipy.com) API to drop a GIF, Sticker, Clip, or Meme into your Android app with a single SDK.
 
 Latest platform references:
 - Docs: [docs.klipy.com](https://docs.klipy.com)
 - API keys / production access: [partner.klipy.com](https://partner.klipy.com/api-keys)
+- Attribution notice: [NOTICE](NOTICE)
 
 ---
 
