@@ -4,6 +4,7 @@ This changelog tracks the Klipy Android SDK release history and the commit-level
 
 ## [Unreleased]
 
+- Remove the Material theme requirement from the picker offline retry button so host apps can inflate the picker under non-MaterialComponents themes.
 - Allow the picker search field to submit when Enter is pressed.
   Commit: `402b07d`
 

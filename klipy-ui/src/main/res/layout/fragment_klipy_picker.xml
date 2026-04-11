@@ -65,13 +65,13 @@
                 android:textColor="@android:color/darker_gray"
                 android:textSize="14sp" />
 
-            <com.google.android.material.button.MaterialButton
+            <Button
                 android:id="@+id/button_retry"
-                style="@style/Widget.Material3.Button"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                android:text="@string/klipy_retry" />
+                android:text="@string/klipy_retry"
+                android:textAllCaps="false" />
         </LinearLayout>
 
         <ProgressBar
