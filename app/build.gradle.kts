@@ -11,6 +11,8 @@ android {
     namespace = "com.klipy.klipy_demo"
     compileSdk = 36
 
+    val klipyApiKey = providers.gradleProperty("KLIPY_API_KEY").orElse("")
+
     defaultConfig {
         applicationId = "com.klipy.klipy_demo"
         minSdk = 24
@@ -19,6 +21,7 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        buildConfigField("String", "KLIPY_API_KEY", "\"${klipyApiKey.get()}\"")
     }
 
     buildTypes {
@@ -40,6 +43,7 @@ android {
     buildFeatures {
         compose = true
         viewBinding = true
+        buildConfig = true
     }
 
 }

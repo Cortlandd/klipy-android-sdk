@@ -38,7 +38,7 @@ fun HomeScreen(
         )
 
         Text(
-            text = "Uses the globally configured Klipy repository and records share analytics for picked items.",
+            text = "Uses the globally configured Klipy repository, reads KLIPY_API_KEY from Gradle properties, and records share analytics for picked items.",
             style = MaterialTheme.typography.bodyMedium
         )
 

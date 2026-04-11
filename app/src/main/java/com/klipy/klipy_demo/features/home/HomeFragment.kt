@@ -9,6 +9,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.platform.ComposeView
 import com.cortlandwalker.ghettoxide.ReducerFragment
+import com.klipy.klipy_demo.BuildConfig
 import com.klipy.klipy_ui.KlipyUi
 import com.klipy.klipy_ui.picker.KlipyPickerConfig
 import com.klipy.klipy_ui.picker.KlipyPickerDialogFragment
@@ -52,6 +53,17 @@ class HomeFragment : ReducerFragment<HomeState, HomeAction, HomeEffect, HomeRedu
     }
 
     private fun openKlipyPicker() {
+        if (BuildConfig.KLIPY_API_KEY.isBlank()) {
+            Toast
+                .makeText(
+                    requireContext(),
+                    "Set KLIPY_API_KEY in your Gradle properties before opening the sample picker.",
+                    Toast.LENGTH_LONG
+                )
+                .show()
+            return
+        }
+
         val config = KlipyPickerConfig(
             columns = 3,
             showTrending = true,
