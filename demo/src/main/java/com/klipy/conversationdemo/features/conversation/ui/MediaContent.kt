@@ -103,7 +103,7 @@ fun MediaContent(
                     key = mediaItem,
                     url = mediaItem.lowQualityMetaData?.url,
                     contentScale = ContentScale.Crop,
-                    blurPreview = rememberAsyncImagePainter(mediaItem.blurPreview),
+                    placeholder = rememberAsyncImagePainter(mediaItem.blurPreview),
                     error = rememberAsyncImagePainter(mediaItem.blurPreview)
                 )
             }
@@ -154,7 +154,7 @@ fun ClipMediaItem(
             key = mediaItem,
             url = mediaItem.lowQualityMetaData?.url,
             contentScale = ContentScale.Crop,
-            blurPreview = rememberAsyncImagePainter(mediaItem.blurPreview),
+            placeholder = rememberAsyncImagePainter(mediaItem.blurPreview),
             error = rememberAsyncImagePainter(mediaItem.blurPreview)
         )
         Icon(

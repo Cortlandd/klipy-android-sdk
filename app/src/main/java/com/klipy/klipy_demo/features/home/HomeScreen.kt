@@ -37,6 +37,11 @@ fun HomeScreen(
             style = MaterialTheme.typography.headlineSmall
         )
 
+        Text(
+            text = "Uses the globally configured Klipy repository and records share analytics for picked items.",
+            style = MaterialTheme.typography.bodyMedium
+        )
+
         Button(
             onClick = { reducer.postAction(HomeAction.OpenPickerClicked) }
         ) {

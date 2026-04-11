@@ -6,6 +6,7 @@ import com.klipy.conversationdemo.features.conversation.model.ClipMessage
 import com.klipy.conversationdemo.features.conversation.model.GifMessage
 import com.klipy.conversationdemo.features.conversation.model.MessageUiModel
 import com.klipy.conversationdemo.features.conversation.model.TextMessage
+import com.klipy.klipy_ui.KlipyUi
 import com.klipy.sdk.model.MediaItem
 import com.klipy.sdk.model.MediaType
 
@@ -43,6 +44,10 @@ class ConversationReducer(
             }
 
             is ConversationAction.MediaItemClicked -> {
+                KlipyUi.requireRepository().triggerView(
+                    mediaType = action.item.mediaType,
+                    slug = action.item.id
+                )
                 emit(ConversationEffect.OpenMediaPreview(action.item))
             }
         }
@@ -75,7 +80,12 @@ class ConversationReducer(
         }
     }
 
-    private fun onTrayMediaSelected(item: MediaItem) {
+    private suspend fun onTrayMediaSelected(item: MediaItem) {
+        KlipyUi.requireRepository().triggerShare(
+            mediaType = item.mediaType,
+            slug = item.id
+        )
+
         val metaHigh = item.highQualityMetaData
         val metaLow = item.lowQualityMetaData
         val width = metaHigh?.width ?: metaLow?.width ?: 0
