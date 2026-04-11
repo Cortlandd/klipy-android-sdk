@@ -1,4 +1,7 @@
 <resources>
     <string name="klipy_powered_by">Powered by Klipy</string>
     <string name="klipy_open_website">Open Klipy website</string>
+    <string name="klipy_offline_title">No internet connection</string>
+    <string name="klipy_offline_message">Reconnect to the internet to load content from Klipy.</string>
+    <string name="klipy_retry">Retry</string>
 </resources>

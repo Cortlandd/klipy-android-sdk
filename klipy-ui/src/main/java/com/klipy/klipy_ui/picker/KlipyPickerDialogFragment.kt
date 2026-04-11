@@ -4,6 +4,8 @@ import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.DialogInterface
 import android.content.Intent
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import android.net.Uri
 import android.os.Bundle
 import android.view.*
@@ -184,6 +186,7 @@ class KlipyPickerDialogFragment : BottomSheetDialogFragment() {
         setupTabs()
         setupRecycler()
         setupSearch()
+        setupRetry()
         setupPoweredByFooter()
 
         // Set initial media type but do NOT auto-load
@@ -285,6 +288,12 @@ class KlipyPickerDialogFragment : BottomSheetDialogFragment() {
         }
     }
 
+    private fun setupRetry() {
+        binding.buttonRetry.setOnClickListener {
+            retryCurrentRequest()
+        }
+    }
+
     private fun setupPoweredByFooter() {
         binding.footerPoweredBy.setOnClickListener {
             openKlipyWebsite()
@@ -309,7 +318,7 @@ class KlipyPickerDialogFragment : BottomSheetDialogFragment() {
         adapter.submitList(currentItems.toList())
         hasMore = false
         isLoading = false
-        binding.progressLoading.visibility = View.GONE
+        showContentState()
     }
 
     private fun selectMediaType(type: MediaType) {
@@ -357,10 +366,15 @@ class KlipyPickerDialogFragment : BottomSheetDialogFragment() {
         }
 
         if (isLoading || !hasMore) return
+        if (!isNetworkAvailable()) {
+            handleConnectivityFailure(reset)
+            return
+        }
+
         isLoading = true
 
         if (reset) {
-            binding.progressLoading.visibility = View.VISIBLE
+            showLoadingState()
         }
 
         loadJob?.cancel()
@@ -383,8 +397,7 @@ class KlipyPickerDialogFragment : BottomSheetDialogFragment() {
 
                     adapter.submitList(currentItems.toList())
 
-                    binding.progressLoading.visibility = View.GONE
-                    binding.recyclerMedia.visibility = View.VISIBLE
+                    showContentState()
                     if (reset) {
                         binding.recyclerMedia.animate()
                             .alpha(1f)
@@ -392,10 +405,13 @@ class KlipyPickerDialogFragment : BottomSheetDialogFragment() {
                             .start()
                     }
                 }
-                .onFailure {
+                .onFailure { error ->
                     hasMore = false
-                    binding.progressLoading.visibility = View.GONE
-                    binding.recyclerMedia.visibility = View.VISIBLE
+                    if (shouldShowOfflineState(error, reset)) {
+                        showOfflineState()
+                    } else {
+                        showContentState()
+                    }
                 }
 
             isLoading = false
@@ -418,4 +434,59 @@ class KlipyPickerDialogFragment : BottomSheetDialogFragment() {
         listener?.onMediaSelected(item, currentFilter)
         dismiss()
     }
+
+    private fun retryCurrentRequest() {
+        hasMore = true
+        startNewSearch()
+    }
+
+    private fun showLoadingState() {
+        binding.layoutOfflineState.visibility = View.GONE
+        binding.recyclerMedia.visibility = View.VISIBLE
+        binding.progressLoading.visibility = View.VISIBLE
+    }
+
+    private fun showContentState() {
+        binding.layoutOfflineState.visibility = View.GONE
+        binding.recyclerMedia.visibility = View.VISIBLE
+        binding.progressLoading.visibility = View.GONE
+    }
+
+    private fun showOfflineState() {
+        binding.layoutOfflineState.visibility = View.VISIBLE
+        binding.recyclerMedia.visibility = View.GONE
+        binding.progressLoading.visibility = View.GONE
+    }
+
+    private fun shouldShowOfflineState(
+        throwable: Throwable,
+        reset: Boolean
+    ): Boolean {
+        if (!reset && currentItems.isNotEmpty()) return false
+        return !isNetworkAvailable() || throwable.isConnectivityFailure()
+    }
+
+    private fun handleConnectivityFailure(reset: Boolean) {
+        hasMore = false
+        isLoading = false
+
+        if (reset || currentItems.isEmpty()) {
+            showOfflineState()
+        } else {
+            showContentState()
+        }
+    }
+
+    private fun isNetworkAvailable(): Boolean {
+        val connectivityManager = context?.getSystemService(Context.CONNECTIVITY_SERVICE)
+            as? ConnectivityManager
+            ?: return false
+
+        val network = connectivityManager.activeNetwork ?: return false
+        val capabilities = connectivityManager.getNetworkCapabilities(network) ?: return false
+
+        return capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) &&
+            capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
+    }
+
 }
