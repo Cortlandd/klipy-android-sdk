@@ -73,7 +73,7 @@ class KlipyPickerDialogFragment : BottomSheetDialogFragment() {
         }
 
         /**
-         * GIPHY-style usage: pass your Klipy API key directly to the fragment.
+         * Picker-only usage: pass your Klipy API key directly to the fragment.
          * This lets devs use the picker without calling KlipyUi.configure(repo) first.
          */
         fun newInstance(

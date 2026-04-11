@@ -20,7 +20,7 @@ import com.klipy.sdk.KlipyRepository
  *
  * 2) Do NOT configure globally. Instead pass the API key directly when opening
  *    [com.klipy.klipy_ui.picker.KlipyPickerDialogFragment]. This mirrors the way
- *    GIPHY does it and keeps setup simple for apps that only want a picker.
+ *    picker-only integrations work and keeps setup simple for apps that only want a picker.
  */
 object KlipyUi {
 

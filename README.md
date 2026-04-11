@@ -6,6 +6,10 @@
 
 An Android SDK wrapping the [Klipy](https://klipy.com) API to drop a GIF, Sticker, Clip, or Meme into your Android app with a single SDK.
 
+Latest platform references:
+- Docs: [docs.klipy.com](https://docs.klipy.com)
+- API keys / production access: [partner.klipy.com](https://partner.klipy.com/api-keys)
+
 ---
 
 ## Modern Android Stack
@@ -64,7 +68,7 @@ dependencyResolutionManagement {
 // app/build.gradle.kts
 dependencies {
     implementation("com.github.Cortlandd:klipy-android-sdk:klipy:0.1.4")
-    // If you want to use the picker fragment, the above isn't necessary to implement as ui uses it arleady
+    // If you want the ready-made picker fragment, klipy-ui already depends on klipy.
     implementation("com.github.Cortlandd:klipy-android-sdk:klipy-ui:0.1.4")
 }
 ```
@@ -78,6 +82,28 @@ dependencies {
     implementation(project(":klipy-ui"))
 }
 ```
+
+## Migrating From Tenor
+
+Klipy's live migration guidance is straightforward:
+
+1. Create your app key in the [Partner Panel](https://partner.klipy.com/api-keys).
+2. Replace the old `tenor.googleapis.com` host with Klipy's `api.klipy.com` endpoints.
+3. Add Klipy attribution using the current [branding assets](https://drive.google.com/drive/u/3/folders/1ix5_5221kgbJHPqhCxwPsqHlHexhQP2w).
+4. Request production access in the Partner Panel when you're ready to go live.
+
+For Android SDK users, the practical API mapping looks like this:
+
+- Tenor-style search/trending calls should now target `https://api.klipy.com/api/v1/{app_key}/...`.
+- Search and trending requests use `customer_id`; this SDK now defaults it to the device identifier and lets you override it explicitly.
+- Klipy's current docs expose `locale`, `content_filter`, and `format_filter` on supported endpoints, and the SDK now surfaces those as typed request options.
+- Share trigger requests can include the originating search query so search-based shares stay attributable.
+
+Helpful live references:
+- [Klipy Docs](https://docs.klipy.com)
+- [Klipy's Tenor migration guide](https://docs.klipy.com/migrate-from-tenor/search)
+- [GIF Search API reference](https://docs.klipy.com/gifs-api/gifs-search-api)
+- [Android WebView ads docs](https://docs.klipy.com/advertisements/android-webview-sdk)
 
 ## Basic Sample App Module Screenshots
 | Default State        | Search Screen          | Gif Results            | Sticker Results        | Clip Results           | Displaying selection   |
@@ -151,7 +177,7 @@ class ChatFragment : Fragment(R.layout.fragment_chat), KlipyPickerListener {
 
 If you don't want to configure `KlipyUi` globally, you can also open the picker by passing your API key directly.
 
-### Alternative: show the picker without global configuration (GIPHY-style)
+### Alternative: show the picker without global configuration
 
 If you don't want to call `KlipyUi.configure(repo)` in your `Application`, you can pass your
 Klipy API key directly to the picker fragment:
@@ -177,8 +203,31 @@ Glide.with(imageView)
     .into(imageView)
 ```
 
+4. Optional request tuning for migration-sensitive integrations
+```kotlin
+val gifs = repo.search(
+    mediaType = MediaType.GIF,
+    query = "celebration",
+    options = MediaRequestOptions(
+        customerId = currentUser.id,
+        locale = "us",
+        contentFilter = ContentFilter.LOW,
+        formatFilter = linkedSetOf(MediaFormat.GIF, MediaFormat.WEBP)
+    )
+)
+
+repo.triggerShare(
+    mediaType = MediaType.GIF,
+    slug = selectedItem.id,
+    options = ShareTriggerOptions(
+        customerId = currentUser.id,
+        searchQuery = "celebration"
+    )
+)
+```
+
 # Using the UI Picker (klipy-ui)
-klipy-ui ships a ready-made picker similar in spirit to Giphy’s dialog:
+klipy-ui ships a ready-made picker for apps that want a drop-in Klipy experience:
 - Implemented as a BottomSheetDialogFragment.
 - Supports GIFs, stickers, and clips (mp4).
 - Search-on-submit (no auto-search on open).
@@ -226,6 +275,10 @@ You can then render the selected MediaItem however you like (e.g., Glide for GIF
 - com.klipy.sdk.model.MediaItem
 - com.klipy.sdk.model.Category
 - com.klipy.sdk.model.MediaData
+- com.klipy.sdk.model.ContentFilter
+- com.klipy.sdk.model.MediaFormat
+- com.klipy.sdk.model.MediaRequestOptions
+- com.klipy.sdk.model.ShareTriggerOptions
 - fun MediaType.singularName()
 - fun MediaItem.isAD()
 ### Public UI types:
