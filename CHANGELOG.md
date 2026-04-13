@@ -4,9 +4,17 @@ This changelog tracks the Klipy Android SDK release history and the commit-level
 
 ## [Unreleased]
 
+- No unreleased changes yet.
+
+## [0.1.12] - 2026-04-13
+
 - Add the Klipy test API key as the committed sample app fallback.
   Commit: `13b3552`
 - Fix the README JitPack coordinates for `klipy` and `klipy-ui`.
+  Commit: `4898bce`
+- Speed up picker grid rendering by preferring lightweight preview assets and bitmap thumbnails.
+  Commit: `643ebd7`
+- Update the published SDK version references to `0.1.12`.
 
 ## [0.1.11] - 2026-04-11
 
