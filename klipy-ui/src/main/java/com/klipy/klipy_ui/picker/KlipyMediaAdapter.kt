@@ -1,7 +1,6 @@
 package com.klipy.klipy_ui.picker
 
-import android.graphics.drawable.Drawable
-import android.util.Log
+import android.graphics.Bitmap
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -12,6 +11,7 @@ import com.bumptech.glide.Glide
 import com.bumptech.glide.load.DataSource
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.bumptech.glide.load.engine.GlideException
+import com.bumptech.glide.request.RequestOptions
 import com.bumptech.glide.request.RequestListener
 import com.bumptech.glide.request.target.Target
 import com.cortlandwalker.klipy_ui.databinding.ItemKlipyMediaBinding
@@ -25,13 +25,17 @@ import com.klipy.sdk.model.MediaType
  * to build a custom UI around [com.klipy.sdk.KlipyRepository] results.
  *
  * It uses Glide under the hood and:
- * - Shows the best available preview URL (GIF / PNG / WebP / MP4).
+ * - Shows a fast-loading preview URL sized for the grid.
  * - Shows a "play" overlay for clips.
  * - Handles a simple skeleton/loading state.
  */
 class KlipyMediaAdapter(
     private val onClick: (MediaItem) -> Unit
 ) : ListAdapter<MediaItem, KlipyMediaAdapter.VH>(Diff) {
+
+    private companion object {
+        private const val GRID_IMAGE_SIZE_PX = 360
+    }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
         val inflater = LayoutInflater.from(parent.context)
@@ -51,20 +55,9 @@ class KlipyMediaAdapter(
         fun bind(item: MediaItem) {
             val context = binding.imageMedia.context
 
-            // For clips: show GIF (selector) in the grid.
-            // For others: keep using highQuality (gif/webp) first.
-            val meta = when (item.mediaType) {
-                MediaType.CLIP -> item.lowQualityMetaData ?: item.highQualityMetaData
-                else           -> item.highQualityMetaData ?: item.lowQualityMetaData
-            }
+            // Grid cells should prefer lighter preview assets so results appear quickly.
+            val meta = item.lowQualityMetaData ?: item.highQualityMetaData
             val url = meta?.url
-
-            Log.d(
-                "KlipyMediaAdapter",
-                "bind id=${item.id}, type=${item.mediaType}, url=$url, tags=${item.tags}"
-            )
-
-            Log.d("KlipyMediaAdapter ITEM", item.toString())
 
             // Reset UI
             binding.skeletonView.visibility = View.VISIBLE
@@ -76,20 +69,21 @@ class KlipyMediaAdapter(
 
             if (!url.isNullOrBlank()) {
                 Glide.with(context)
+                    .asBitmap()
                     .load(url) // GIF, PNG, WebP, mp4 all handled
+                    .apply(
+                        RequestOptions()
+                            .centerCrop()
+                            .override(GRID_IMAGE_SIZE_PX, GRID_IMAGE_SIZE_PX)
+                    )
                     .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
-                    .listener(object : RequestListener<Drawable> {
+                    .listener(object : RequestListener<Bitmap> {
                         override fun onLoadFailed(
                             e: GlideException?,
                             model: Any?,
-                            target: Target<Drawable>?,
+                            target: Target<Bitmap>?,
                             isFirstResource: Boolean
                         ): Boolean {
-                            Log.e(
-                                "KlipyMediaAdapter",
-                                "Glide load failed for id=${item.id}, url=$url",
-                                e
-                            )
                             binding.itemProgress.visibility = View.GONE
                             // keep skeleton + playIcon as fallback
                             binding.imageMedia.visibility = View.INVISIBLE
@@ -97,9 +91,9 @@ class KlipyMediaAdapter(
                         }
 
                         override fun onResourceReady(
-                            resource: Drawable?,
+                            resource: Bitmap?,
                             model: Any?,
-                            target: Target<Drawable>?,
+                            target: Target<Bitmap>?,
                             dataSource: DataSource?,
                             isFirstResource: Boolean
                         ): Boolean {
