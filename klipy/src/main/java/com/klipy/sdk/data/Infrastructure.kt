@@ -148,6 +148,7 @@ class AdsQueryParametersInterceptor(
             .apply {
                 addQueryParameterIfMissing(originalUrl, CUSTOMER_ID, deviceInfoProvider.getDeviceId())
                 addQueryParameterIfMissing(originalUrl, LOCALE, Locale.getDefault().language)
+                addQueryParameterIfMissing(originalUrl, AD_IFRAME, "1")
                 addQueryParameterIfMissing(originalUrl, AD_MIN_WIDTH, "50")
                 addQueryParameterIfMissing(
                     originalUrl,
@@ -213,15 +214,16 @@ class AdsQueryParametersInterceptor(
     private fun okhttp3.HttpUrl.Builder.addQueryParameterIfMissing(
         originalUrl: okhttp3.HttpUrl,
         name: String,
-        value: String
+        value: String?
     ) {
-        if (originalUrl.queryParameter(name) == null) {
+        if (originalUrl.queryParameter(name) == null && !value.isNullOrBlank()) {
             addQueryParameter(name, value)
         }
     }
 
     private companion object {
         const val CUSTOMER_ID = "customer_id"
+        const val AD_IFRAME = "ad-iframe"
         const val AD_MIN_WIDTH = "ad-min-width"
         const val AD_MAX_WIDTH = "ad-max-width"
         const val AD_MIN_HEIGHT = "ad-min-height"

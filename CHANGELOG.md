@@ -7,6 +7,7 @@ This changelog tracks the Klipy Android SDK release history and the commit-level
 - Add a picker theme API with automatic, light, and dark modes plus color overrides.
 - Upgrade the sample app into a benchmark-style picker configurator for theme, layout, feed, and media tabs.
 - Tint picker image loading indicators yellow and keep the search placeholder text theme-aware and grey by default.
+- Append `ad-iframe=1` to ad-enabled SDK requests and harden ad query enrichment against missing platform strings in tests.
 
 ## [0.1.12] - 2026-04-13
 
