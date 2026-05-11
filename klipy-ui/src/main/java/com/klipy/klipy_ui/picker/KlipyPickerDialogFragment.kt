@@ -2,12 +2,15 @@ package com.klipy.klipy_ui.picker
 
 import android.content.ActivityNotFoundException
 import android.content.Context
+import android.content.res.ColorStateList
+import android.content.res.Configuration
 import android.content.DialogInterface
 import android.content.Intent
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.net.Uri
 import android.os.Bundle
+import android.graphics.Color
 import android.view.KeyEvent
 import android.view.*
 import android.view.inputmethod.EditorInfo
@@ -22,6 +25,7 @@ import com.google.android.material.R
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.google.android.material.tabs.TabLayout
+import com.google.android.material.textfield.TextInputLayout
 import com.klipy.klipy_ui.KlipyUi
 import com.klipy.sdk.KlipyRepository
 import com.klipy.sdk.KlipySdk
@@ -67,6 +71,19 @@ import kotlinx.coroutines.launch
  * with a [com.klipy.sdk.KlipyRepository] instance (typically in `Application.onCreate`).
  */
 class KlipyPickerDialogFragment : BottomSheetDialogFragment() {
+
+    private data class PickerPalette(
+        val backgroundColor: Int,
+        val surfaceColor: Int,
+        val primaryColor: Int,
+        val loadingIndicatorColor: Int,
+        val onSurfaceColor: Int,
+        val secondaryTextColor: Int,
+        val outlineColor: Int,
+        val searchFieldColor: Int,
+        val buttonColor: Int,
+        val onButtonColor: Int
+    )
 
     companion object {
         private val KLIPY_WEBSITE_URI: Uri = Uri.parse("https://klipy.com/en-US")
@@ -135,7 +152,12 @@ class KlipyPickerDialogFragment : BottomSheetDialogFragment() {
         )
     }
 
-    private val adapter = KlipyMediaAdapter { onItemClicked(it) }
+    private val adapter by lazy {
+        KlipyMediaAdapter(
+            loadingIndicatorColor = resolvePickerPalette().loadingIndicatorColor,
+            onClick = { onItemClicked(it) }
+        )
+    }
 
     private var currentType: MediaType? = null
     private var currentFilter: String? = null
@@ -167,6 +189,7 @@ class KlipyPickerDialogFragment : BottomSheetDialogFragment() {
 
         bottomSheet.post {
             val behavior = BottomSheetBehavior.from(bottomSheet)
+            bottomSheet.setBackgroundColor(resolvePickerPalette().backgroundColor)
 
             val displayMetrics = resources.displayMetrics
             val targetHeight = (displayMetrics.heightPixels * 0.9f).toInt()
@@ -189,6 +212,7 @@ class KlipyPickerDialogFragment : BottomSheetDialogFragment() {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        applyPickerTheme()
         setupTabs()
         setupRecycler()
         setupSearch()
@@ -360,6 +384,125 @@ class KlipyPickerDialogFragment : BottomSheetDialogFragment() {
             openKlipyWebsite()
         }
     }
+
+    private fun applyPickerTheme() {
+        val palette = resolvePickerPalette()
+
+        binding.root.setBackgroundColor(palette.backgroundColor)
+        binding.layoutContentState.setBackgroundColor(palette.backgroundColor)
+        binding.recyclerMedia.setBackgroundColor(palette.backgroundColor)
+        binding.footerPoweredBy.setBackgroundColor(palette.surfaceColor)
+        binding.viewFooterDivider.setBackgroundColor(palette.outlineColor)
+
+        binding.textOfflineTitle.setTextColor(palette.onSurfaceColor)
+        binding.textOfflineMessage.setTextColor(palette.secondaryTextColor)
+        binding.textPoweredBy.setTextColor(palette.onSurfaceColor)
+        binding.progressLoading.indeterminateTintList = ColorStateList.valueOf(palette.primaryColor)
+
+        binding.buttonRetry.backgroundTintList = ColorStateList.valueOf(palette.buttonColor)
+        binding.buttonRetry.setTextColor(palette.onButtonColor)
+
+        binding.tabMediaTypes.setBackgroundColor(palette.surfaceColor)
+        binding.tabMediaTypes.setSelectedTabIndicatorColor(palette.primaryColor)
+        binding.tabMediaTypes.setTabTextColors(
+            palette.secondaryTextColor,
+            palette.primaryColor
+        )
+
+        binding.searchInputLayout.apply {
+            boxBackgroundMode = TextInputLayout.BOX_BACKGROUND_FILLED
+            setBoxBackgroundColor(palette.searchFieldColor)
+            val hintColorStateList = ColorStateList(
+                arrayOf(
+                    intArrayOf(android.R.attr.state_focused),
+                    intArrayOf()
+                ),
+                intArrayOf(
+                    palette.secondaryTextColor,
+                    palette.secondaryTextColor
+                )
+            )
+            defaultHintTextColor = hintColorStateList
+            setHintTextColor(hintColorStateList)
+            setBoxStrokeColorStateList(
+                ColorStateList(
+                    arrayOf(
+                        intArrayOf(android.R.attr.state_focused),
+                        intArrayOf()
+                    ),
+                    intArrayOf(
+                        palette.primaryColor,
+                        palette.outlineColor
+                    )
+                )
+            )
+        }
+        binding.inputSearch.setTextColor(palette.onSurfaceColor)
+        binding.inputSearch.setHintTextColor(palette.secondaryTextColor)
+        binding.inputSearch.highlightColor = palette.primaryColor
+    }
+
+    private fun resolvePickerPalette(): PickerPalette {
+        val defaults = when (resolveThemeMode()) {
+            KlipyPickerThemeMode.DARK -> darkPalette()
+            KlipyPickerThemeMode.LIGHT -> lightPalette()
+            KlipyPickerThemeMode.AUTOMATIC -> lightPalette()
+        }
+        val overrides = config.colors
+
+        return defaults.copy(
+            backgroundColor = overrides?.backgroundColor ?: defaults.backgroundColor,
+            surfaceColor = overrides?.surfaceColor ?: defaults.surfaceColor,
+            primaryColor = overrides?.primaryColor ?: defaults.primaryColor,
+            onSurfaceColor = overrides?.onSurfaceColor ?: defaults.onSurfaceColor,
+            secondaryTextColor = overrides?.secondaryTextColor ?: defaults.secondaryTextColor,
+            outlineColor = overrides?.outlineColor ?: defaults.outlineColor,
+            searchFieldColor = overrides?.searchFieldColor ?: defaults.searchFieldColor,
+            buttonColor = overrides?.buttonColor ?: defaults.buttonColor,
+            onButtonColor = overrides?.onButtonColor ?: defaults.onButtonColor
+        )
+    }
+
+    private fun resolveThemeMode(): KlipyPickerThemeMode {
+        return when (config.themeMode) {
+            KlipyPickerThemeMode.AUTOMATIC -> {
+                val isDarkMode = (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) ==
+                    Configuration.UI_MODE_NIGHT_YES
+                if (isDarkMode) {
+                    KlipyPickerThemeMode.DARK
+                } else {
+                    KlipyPickerThemeMode.LIGHT
+                }
+            }
+            else -> config.themeMode
+        }
+    }
+
+    private fun lightPalette() = PickerPalette(
+        backgroundColor = Color.parseColor("#FFF6F4EF"),
+        surfaceColor = Color.WHITE,
+        primaryColor = Color.parseColor("#FF111827"),
+        loadingIndicatorColor = Color.parseColor("#FFF7C948"),
+        onSurfaceColor = Color.parseColor("#FF111827"),
+        secondaryTextColor = Color.parseColor("#FF6B7280"),
+        outlineColor = Color.parseColor("#FFD1D5DB"),
+        searchFieldColor = Color.parseColor("#FFF3F4F6"),
+        buttonColor = Color.parseColor("#FF111827"),
+        onButtonColor = Color.WHITE
+    )
+
+    private fun darkPalette() = PickerPalette(
+        backgroundColor = Color.parseColor("#FF111315"),
+        surfaceColor = Color.parseColor("#FF1A1D21"),
+        primaryColor = Color.parseColor("#FFF7C948"),
+        loadingIndicatorColor = Color.parseColor("#FFF7C948"),
+        onSurfaceColor = Color.parseColor("#FFF9FAFB"),
+        secondaryTextColor = Color.parseColor("#FF9CA3AF"),
+        outlineColor = Color.parseColor("#FF374151"),
+        searchFieldColor = Color.parseColor("#FF161A1E"),
+        buttonColor = Color.parseColor("#FFF7C948"),
+        onButtonColor = Color.parseColor("#FF111827")
+    )
 
     private fun openKlipyWebsite() {
         val intent = Intent(Intent.ACTION_VIEW, KLIPY_WEBSITE_URI).apply {

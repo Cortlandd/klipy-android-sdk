@@ -1,6 +1,7 @@
 package com.klipy.klipy_ui.picker
 
 import android.graphics.Bitmap
+import android.content.res.ColorStateList
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -30,6 +31,7 @@ import com.klipy.sdk.model.MediaType
  * - Handles a simple skeleton/loading state.
  */
 class KlipyMediaAdapter(
+    private val loadingIndicatorColor: Int,
     private val onClick: (MediaItem) -> Unit
 ) : ListAdapter<MediaItem, KlipyMediaAdapter.VH>(Diff) {
 
@@ -40,7 +42,7 @@ class KlipyMediaAdapter(
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
         val inflater = LayoutInflater.from(parent.context)
         val binding = ItemKlipyMediaBinding.inflate(inflater, parent, false)
-        return VH(binding, onClick)
+        return VH(binding, loadingIndicatorColor, onClick)
     }
 
     override fun onBindViewHolder(holder: VH, position: Int) {
@@ -49,6 +51,7 @@ class KlipyMediaAdapter(
 
     class VH(
         private val binding: ItemKlipyMediaBinding,
+        private val loadingIndicatorColor: Int,
         private val onClick: (MediaItem) -> Unit
     ) : RecyclerView.ViewHolder(binding.root) {
 
@@ -62,6 +65,8 @@ class KlipyMediaAdapter(
             // Reset UI
             binding.skeletonView.visibility = View.VISIBLE
             binding.itemProgress.visibility = View.VISIBLE
+            binding.itemProgress.indeterminateTintList =
+                ColorStateList.valueOf(loadingIndicatorColor)
             binding.imageMedia.visibility = View.INVISIBLE
             binding.imageMedia.setImageDrawable(null)
             binding.playIcon.visibility =

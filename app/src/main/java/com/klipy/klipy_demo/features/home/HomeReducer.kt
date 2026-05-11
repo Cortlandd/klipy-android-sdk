@@ -10,12 +10,44 @@ class HomeReducer : Reducer<HomeState, HomeAction, HomeEffect>() {
                 emit(HomeEffect.OpenPicker)
             }
 
+            HomeAction.OpenSettingsClicked -> {
+                state { it.copy(showSettings = true) }
+            }
+
+            HomeAction.SettingsDismissed -> {
+                state { it.copy(showSettings = false) }
+            }
+
             is HomeAction.MediaSelected -> {
                 state { it.copy(lastSelected = action.media) }
             }
 
             is HomeAction.SearchTermUpdated -> {
                 state { it.copy(lastSearchTerm = action.term) }
+            }
+
+            is HomeAction.ThemeModeChanged -> {
+                state { it.copy(pickerSettings = it.pickerSettings.copy(themeMode = action.mode)) }
+            }
+
+            is HomeAction.ColumnsChanged -> {
+                state { it.copy(pickerSettings = it.pickerSettings.copy(columns = action.columns)) }
+            }
+
+            is HomeAction.DefaultFeedChanged -> {
+                state { it.copy(pickerSettings = it.pickerSettings.copy(defaultFeed = action.feed)) }
+            }
+
+            is HomeAction.CustomColorsChanged -> {
+                state { it.copy(pickerSettings = it.pickerSettings.copy(useCustomColors = action.enabled)) }
+            }
+
+            is HomeAction.MediaTypeToggled -> {
+                state {
+                    it.copy(
+                        pickerSettings = it.pickerSettings.withToggledMediaType(action.type)
+                    )
+                }
             }
 
             HomeAction.PickerDismissed -> {

@@ -1,5 +1,6 @@
 package com.klipy.klipy_demo.features.home
 
+import android.content.res.Configuration
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -64,17 +65,9 @@ class HomeFragment : ReducerFragment<HomeState, HomeAction, HomeEffect, HomeRedu
             return
         }
 
-        val config = KlipyPickerConfig(
-            columns = 3,
-            showTrending = true,
-            showRecents = true,
-            mediaTypes = listOf(
-                MediaType.GIF,
-                MediaType.STICKER,
-                MediaType.CLIP,
-                MediaType.MEME
-            )
-        )
+        val isDarkMode = (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) ==
+            Configuration.UI_MODE_NIGHT_YES
+        val config = vm.state.value.pickerSettings.toPickerConfig(isDarkMode)
 
         val dialog = KlipyPickerDialogFragment.newInstance(config)
         dialog.listener = object : KlipyPickerListener {

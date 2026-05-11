@@ -14,6 +14,8 @@ import kotlinx.parcelize.Parcelize
  *                        If both [showRecents] and [showTrending] are true,
  *                        trending is used as the initial feed.
  * @property initialMediaType Which tab is initially selected when the picker opens.
+ * @property themeMode Visual theme for the picker sheet.
+ * @property colors Optional high-level color overrides layered on top of [themeMode].
  *
  * This class is `Parcelable` so it can be passed in a fragment `Bundle`.
  */
@@ -24,4 +26,6 @@ data class KlipyPickerConfig(
     val showRecents: Boolean = false,
     val showTrending: Boolean = true,
     val initialMediaType: MediaType = MediaType.GIF,
+    val themeMode: KlipyPickerThemeMode = KlipyPickerThemeMode.AUTOMATIC,
+    val colors: KlipyPickerColors? = null,
 ) : Parcelable

@@ -1,6 +1,7 @@
 package com.klipy.klipy_ui.tray
 
 import android.content.Context
+import android.graphics.Color
 import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.view.View
@@ -71,7 +72,9 @@ class KlipyTrayView @JvmOverloads constructor(
     }
 
     private fun setupRecycler() {
-        adapter = KlipyMediaAdapter { item ->
+        adapter = KlipyMediaAdapter(
+            loadingIndicatorColor = Color.parseColor("#FFF7C948")
+        ) { item ->
             viewModel?.dispatch(KlipyTrayAction.MediaItemClicked(item))
         }
         mediaRecycler.adapter = adapter
