@@ -5,7 +5,6 @@ plugins {
     id("org.jetbrains.kotlin.plugin.serialization") version "2.0.0"
     id("kotlin-parcelize")
 
-    // For ksp and ROOM
     id("com.google.devtools.ksp") version "2.0.21-1.0.27"
     id("androidx.navigation.safeargs.kotlin") version "2.9.5"
 }
@@ -83,27 +82,22 @@ dependencies {
 
     implementation(libs.androidx.fragment.ktx)
 
-    // Navigation
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.navigation.fragment)
     implementation(libs.androidx.navigation.ui)
     implementation(libs.androidx.navigation.dynamic.features.fragment)
     androidTestImplementation(libs.androidx.navigation.testing)
 
-    // Image loading
     implementation(libs.coil.core)
     implementation(libs.coil.gif)
     implementation(libs.coil.compose)
     implementation("com.github.bumptech.glide:glide:5.0.5")
 
-    // AppCompat
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.appcompat.resources)
 
-    // Coroutines
     implementation(libs.kotlinx.coroutines.android)
 
-    // Hilt
     implementation(libs.hilt.android)
     ksp(libs.hilt.android.compiler)
     implementation(libs.androidx.hilt.navigation.fragment)

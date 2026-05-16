@@ -12,8 +12,6 @@ import retrofit2.Invocation
 import retrofit2.Response as RetrofitResponse
 import java.util.Locale
 
-// --- API Call Helper ---
-
 class ApiCallHelper {
 
     /**
@@ -33,8 +31,6 @@ class ApiCallHelper {
     }
 }
 
-// --- Advertising ID ---
-
 interface AdvertisingInfoProvider {
     fun getAdvertisingId(): String?
 }
@@ -52,8 +48,6 @@ class AdvertisingInfoProviderImpl(
         }
     }
 }
-
-// --- Device info ---
 
 interface DeviceInfoProvider {
     fun getDeviceId(): String
@@ -84,12 +78,9 @@ class DeviceInfoProviderImpl(
 
     override fun getNetworkOperator(): String? {
         val tm = context.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
-        // MCC+MNC string
         return tm.networkOperator
     }
 }
-
-// --- Screen info ---
 
 interface ScreenMeasurementsProvider {
     var device: Measurements
@@ -116,7 +107,6 @@ class ScreenMeasurementsProviderImpl(
 
     override fun getDensityScaleFactor(): Float {
         val metrics = context.resources.displayMetrics
-        // 160 dpi is baseline
         return metrics.densityDpi / 160f
     }
 }
@@ -126,13 +116,9 @@ data class Measurements(
     val height: Int
 )
 
-// --- Annotation ---
-
 @Target(AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.RUNTIME)
 annotation class AdsQueryParameters
-
-// --- Interceptor adding ad / device query params when @AdsQueryParameters is present ---
 
 class AdsQueryParametersInterceptor(
     private val deviceInfoProvider: DeviceInfoProvider,
@@ -153,8 +139,6 @@ class AdsQueryParametersInterceptor(
 
         val originalUrl = originalRequest.url
         val builder = originalUrl.newBuilder()
-            // TODO: This may need to change?
-            // Unique user id in the app; demo uses device ID.
             .apply {
                 addQueryParameterIfMissing(originalUrl, CUSTOMER_ID, deviceInfoProvider.getDeviceId())
                 addQueryParameterIfMissing(originalUrl, LOCALE, Locale.getDefault().language)
@@ -206,7 +190,6 @@ class AdsQueryParametersInterceptor(
                     addQueryParameterIfMissing(originalUrl, AD_MCCMNC, op)
                 }
             }
-            // Demo values; if you have real user profile data, you can adapt these.
             .apply {
                 addQueryParameterIfMissing(originalUrl, AD_YOB, "1980")
                 addQueryParameterIfMissing(originalUrl, AD_GENDER, "M")
@@ -219,7 +202,6 @@ class AdsQueryParametersInterceptor(
                 deviceInfoProvider.getUserAgent()
                     ?.takeIf { it.isNotBlank() }
                     ?.let { userAgent ->
-                        // Match the official demo app's browser-like ad requests.
                         header(USER_AGENT, userAgent)
                     }
             }

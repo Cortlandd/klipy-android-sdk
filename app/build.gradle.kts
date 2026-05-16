@@ -78,18 +78,15 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
 
-    // Navigation
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.navigation.fragment)
     implementation(libs.androidx.navigation.ui)
     implementation(libs.androidx.navigation.dynamic.features.fragment)
     androidTestImplementation(libs.androidx.navigation.testing)
 
-    // Image loading
     implementation(libs.coil.compose)
     implementation(libs.coil.gif)
 
-    // AppCompat
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.appcompat.resources)
 

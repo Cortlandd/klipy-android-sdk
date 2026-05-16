@@ -137,7 +137,6 @@ class KlipyPickerDialogFragment : BottomSheetDialogFragment() {
     private lateinit var config: KlipyPickerConfig
 
     private val repo: KlipyRepository by lazy {
-        // Prefer a globally-configured repository if the host app provided one.
         KlipyUi.getRepositoryOrNull() ?: buildRepoFromArgs()
     }
 
@@ -164,7 +163,6 @@ class KlipyPickerDialogFragment : BottomSheetDialogFragment() {
     private var currentType: MediaType? = null
     private var currentFilter: String? = null
 
-    // Paging state
     private val currentItems = mutableListOf<MediaItem>()
     private var isLoading = false
     private var hasMore = true
@@ -184,7 +182,6 @@ class KlipyPickerDialogFragment : BottomSheetDialogFragment() {
     override fun onStart() {
         super.onStart()
 
-        // Make the bottom sheet take ~90% of screen height and expand
         val dialog = dialog ?: return
         val bottomSheet =
             dialog.findViewById<View>(R.id.design_bottom_sheet)
@@ -225,7 +222,6 @@ class KlipyPickerDialogFragment : BottomSheetDialogFragment() {
         setupPoweredByFooter()
         updateAdMeasurements()
 
-        // Set initial media type but do NOT auto-load
         val initialType = config.initialMediaType
             .takeIf { it in config.mediaTypes }
             ?: config.mediaTypes.first()
@@ -511,7 +507,6 @@ class KlipyPickerDialogFragment : BottomSheetDialogFragment() {
         try {
             startActivity(intent)
         } catch (_: ActivityNotFoundException) {
-            // Ignore devices without a browser handler.
         }
     }
 
@@ -529,7 +524,6 @@ class KlipyPickerDialogFragment : BottomSheetDialogFragment() {
         currentType = type
         repo.reset(type)
 
-        // Only trigger network if we have a search term
         if (!currentFilter.isNullOrBlank()) {
             startNewSearch()
         } else {
@@ -545,7 +539,6 @@ class KlipyPickerDialogFragment : BottomSheetDialogFragment() {
             return
         }
 
-        // Reset paging state
         hasMore = true
         isLoading = false
         currentItems.clear()

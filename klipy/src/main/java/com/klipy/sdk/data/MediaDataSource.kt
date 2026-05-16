@@ -80,7 +80,6 @@ internal class MediaDataSourceImpl(
         )
 
         if (requestKey != currentRequestKey) {
-            // Filter changed; reset paging.
             currentPage = INITIAL_PAGE
             canRequestMoreData = true
             currentRequestKey = requestKey

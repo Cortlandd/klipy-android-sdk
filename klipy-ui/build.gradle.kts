@@ -45,7 +45,6 @@ dependencies {
     api("androidx.appcompat:appcompat:1.7.0")
     api("com.google.android.material:material:1.12.0")
 
-    // Material icons
     api("androidx.compose.material:material-icons-core:1.7.8")
     api("androidx.compose.material:material-icons-extended-android:1.7.8")
 
@@ -53,7 +52,6 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.6")
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.6")
 
-    // Glide for image loading
     api("com.github.bumptech.glide:glide:5.0.5")
 
     implementation(libs.androidx.core.ktx)
@@ -63,7 +61,6 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
 
-    // Compose
     implementation(libs.androidx.activity.compose)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui)

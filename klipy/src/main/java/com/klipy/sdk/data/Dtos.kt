@@ -7,8 +7,6 @@ import com.google.gson.annotations.SerializedName
 import com.klipy.sdk.model.Category
 import java.lang.reflect.Type
 
-// DTOs that match Klipy’s HTTP API.
-
 data class CategoriesResponseDto(
     @SerializedName("result")
     val result: Boolean,
@@ -36,7 +34,6 @@ data class CategoryDto(
     val previewUrl: String?
 )
 
-// Mapper to domain
 fun CategoryDto.toDomain(): Category = Category(
     title = category,
     query = query,
@@ -65,8 +62,6 @@ data class MetaDto(
     @SerializedName("ad_max_resize_percent")
     val adMaxResizePercentage: Int? = null
 )
-
-// --- Media Item DTOs ---
 
 data class FileMetaDataDto(
     @SerializedName("url")
@@ -160,8 +155,6 @@ sealed interface MediaItemDto {
     ) : MediaItemDto
 }
 
-// --- Requests ---
-
 data class TriggerViewRequestDto(
     @SerializedName("customer_id")
     val customerId: String,
@@ -175,8 +168,6 @@ data class ReportRequestDto(
     @SerializedName("reason")
     val reason: String
 )
-
-// --- Polymorphic deserializer ---
 
 class MediaItemDtoDeserializer : JsonDeserializer<MediaItemDto> {
     override fun deserialize(
