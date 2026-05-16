@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.os.bundleOf
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.platform.ComposeView
 import androidx.navigation.fragment.findNavController
@@ -32,8 +33,20 @@ class ConversationListFragment :
     override fun onEffect(effect: ConversationListEffect) {
         when(effect) {
             is ConversationListEffect.NavigateToConversation -> {
-                findNavController()
-                    .navigate(ConversationListFragmentDirections.actionConversationListFragmentToConversationFragment((effect.conversationId)))
+                if (effect.conversationId == "99") {
+                    findNavController()
+                        .navigate(
+                            requireContext().resources.getIdentifier(
+                                "ads_demo_fragment",
+                                "id",
+                                requireContext().packageName
+                            ),
+                            bundleOf()
+                        )
+                } else {
+                    findNavController()
+                        .navigate(ConversationListFragmentDirections.actionConversationListFragmentToConversationFragment((effect.conversationId)))
+                }
             }
             is ConversationListEffect.ShowError -> {
 

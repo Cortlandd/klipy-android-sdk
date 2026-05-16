@@ -32,6 +32,7 @@ fun MasonryLayout(
     loadMore: () -> Unit,
     onMediaItemClicked: (mediaItem: MediaItem) -> Unit,
     onMediaItemLongClicked: (mediaItem: MediaItem) -> Unit,
+    onAdLoadFailed: (mediaItem: MediaItem) -> Unit = {},
 ) {
     BoxWithConstraints(modifier = modifier) {
         val density = LocalDensity.current
@@ -63,7 +64,8 @@ fun MasonryLayout(
                         data = it,
                         gap = gap,
                         onMediaItemClicked = onMediaItemClicked,
-                        onMediaItemLongClicked = onMediaItemLongClicked
+                        onMediaItemLongClicked = onMediaItemLongClicked,
+                        onAdLoadFailed = onAdLoadFailed
                     )
                 }
             )

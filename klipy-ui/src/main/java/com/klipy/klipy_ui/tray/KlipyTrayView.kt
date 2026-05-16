@@ -16,10 +16,13 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
 import com.google.android.material.textfield.TextInputEditText
+import com.klipy.klipy_ui.KlipyUi
 import com.klipy.klipy_ui.picker.KlipyMediaAdapter
+import com.klipy.sdk.KlipySdk
 import com.klipy.sdk.model.Category
 import com.klipy.sdk.model.MediaItem
 import com.klipy.sdk.model.MediaType
+import com.klipy.sdk.model.isAD
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -78,7 +81,21 @@ class KlipyTrayView @JvmOverloads constructor(
             viewModel?.dispatch(KlipyTrayAction.MediaItemClicked(item))
         }
         mediaRecycler.adapter = adapter
-        mediaRecycler.layoutManager = GridLayoutManager(context, config.columns)
+        mediaRecycler.layoutManager = GridLayoutManager(context, config.columns).apply {
+            spanSizeLookup = object : GridLayoutManager.SpanSizeLookup() {
+                override fun getSpanSize(position: Int): Int {
+                    val item = adapter.currentList.getOrNull(position)
+                    return if (item?.isAD() == true) {
+                        config.columns
+                    } else {
+                        1
+                    }
+                }
+            }
+        }
+        mediaRecycler.addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ ->
+            updateAdMeasurements()
+        }
 
         mediaRecycler.addOnScrollListener(object : RecyclerView.OnScrollListener() {
             override fun onScrolled(rv: RecyclerView, dx: Int, dy: Int) {
@@ -114,9 +131,13 @@ class KlipyTrayView @JvmOverloads constructor(
         this.viewModel = viewModel
         this.config = config
 
-        (mediaRecycler.layoutManager as? GridLayoutManager)?.spanCount = config.columns
+        (mediaRecycler.layoutManager as? GridLayoutManager)?.apply {
+            spanCount = config.columns
+            spanSizeLookup.invalidateSpanIndexCache()
+        }
 
         setupMediaTypeChips(config.mediaTypes)
+        updateAdMeasurements()
 
         searchInput.addTextChangedListener { text ->
             viewModel.dispatch(
@@ -180,7 +201,26 @@ class KlipyTrayView @JvmOverloads constructor(
             searchInput.setSelection(state.searchInput.length)
         }
 
-        adapter.submitList(state.mediaItems)
+        adapter.submitList(state.mediaItems) {
+            (mediaRecycler.layoutManager as? GridLayoutManager)
+                ?.spanSizeLookup
+                ?.invalidateSpanIndexCache()
+        }
+    }
+
+    private fun updateAdMeasurements() {
+        val repository = KlipyUi.getRepositoryOrNull() ?: return
+        val width = (mediaRecycler.width - mediaRecycler.paddingLeft - mediaRecycler.paddingRight)
+            .takeIf { it > 0 } ?: width
+        val height = mediaRecycler.height.takeIf { it > 0 } ?: height
+        if (width <= 0 || height <= 0) return
+
+        KlipySdk.updateScreenMeasurements(
+            repository = repository,
+            context = context.applicationContext,
+            containerWidthPx = width,
+            containerHeightPx = height
+        )
     }
 
     private fun renderCategories(categories: List<Category>, selected: Category?) {

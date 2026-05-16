@@ -1,6 +1,6 @@
-@file:OptIn(ExperimentalFoundationApi::class)
+@file:OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 
-package com.klipy.conversationdemo.features.conversation.ui
+package com.klipy.klipy_ui.picker
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -34,27 +34,21 @@ import androidx.compose.ui.zIndex
 import co.kikliko.android.ads_sdk.GIFWebView
 import co.kikliko.android.ads_sdk.KlipyContent
 import coil.compose.rememberAsyncImagePainter
-import com.klipy.conversationdemo.features.conversation.model.MediaItemRow
-import com.klipy.conversationdemo.features.conversation.model.hasAd
-import com.klipy.conversationdemo.ui.components.GifImage
 import com.klipy.sdk.model.MediaItem
 import com.klipy.sdk.model.MediaType
 import com.klipy.sdk.model.isAD
 
 @Composable
-fun MediaContent(
-    data: MediaItemRow,
+internal fun PickerMediaContent(
+    data: PickerMediaItemRow,
     gap: Dp,
-    onMediaItemClicked: (mediaItem: MediaItem) -> Unit,
-    onMediaItemLongClicked: (mediaItem: MediaItem) -> Unit,
-    onAdLoadFailed: (mediaItem: MediaItem) -> Unit = {},
+    onMediaItemClicked: (MediaItem) -> Unit,
+    onMediaItemLongClicked: (MediaItem) -> Unit = {}
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .height(
-                data.first().measuredHeight.dp
-            )
+            .height(data.first().measuredHeight.dp)
             .zIndex(if (data.hasAd()) 0F else 1F),
         horizontalArrangement = Arrangement.spacedBy(gap)
     ) {
@@ -62,44 +56,35 @@ fun MediaContent(
             val mediaItem = it.mediaItem
             val itemWidth = it.measuredWidth.dp
             if (mediaItem.isAD()) {
-                AdMediaItem(
+                PickerAdMediaItem(
                     modifier = Modifier
                         .width(itemWidth)
                         .fillMaxHeight()
                         .zIndex(0F),
                     content = mediaItem.lowQualityMetaData?.url,
                     width = it.measuredWidth,
-                    height = it.measuredHeight,
-                    onLoadFailed = { onAdLoadFailed(mediaItem) }
+                    height = it.measuredHeight
                 )
             } else if (mediaItem.mediaType == MediaType.CLIP) {
-                ClipMediaItem(
+                PickerClipMediaItem(
                     modifier = Modifier
                         .width(itemWidth)
                         .fillMaxHeight()
                         .combinedClickable(
-                            onClick = {
-                                onMediaItemClicked(mediaItem)
-                            },
-                            onLongClick = {
-                                onMediaItemLongClicked(mediaItem)
-                            }
+                            onClick = { onMediaItemClicked(mediaItem) },
+                            onLongClick = { onMediaItemLongClicked(mediaItem) }
                         )
                         .zIndex(1F),
                     mediaItem = mediaItem
                 )
             } else {
-                GifImage(
+                PickerGifImage(
                     modifier = Modifier
                         .width(itemWidth)
                         .fillMaxHeight()
                         .combinedClickable(
-                            onClick = {
-                                onMediaItemClicked(mediaItem)
-                            },
-                            onLongClick = {
-                                onMediaItemLongClicked(mediaItem)
-                            }
+                            onClick = { onMediaItemClicked(mediaItem) },
+                            onLongClick = { onMediaItemLongClicked(mediaItem) }
                         )
                         .zIndex(1F),
                     key = mediaItem,
@@ -114,12 +99,11 @@ fun MediaContent(
 }
 
 @Composable
-fun AdMediaItem(
+private fun PickerAdMediaItem(
     modifier: Modifier = Modifier,
     content: String?,
     width: Int,
-    height: Int,
-    onLoadFailed: () -> Unit = {}
+    height: Int
 ) {
     AndroidView(
         modifier = modifier,
@@ -129,13 +113,14 @@ fun AdMediaItem(
             }
         },
         update = {
-            val klipyContent = KlipyContent(
-                isWebView = true,
-                content = content.orEmpty(),
-                width = width,
-                height = height
+            it.loadContent(
+                KlipyContent(
+                    isWebView = false,
+                    content = content.orEmpty(),
+                    width = width,
+                    height = height
+                )
             )
-            it.loadContent(klipyContent)
         },
         onRelease = {
             it.removeAllViews()
@@ -145,14 +130,12 @@ fun AdMediaItem(
 }
 
 @Composable
-fun ClipMediaItem(
+private fun PickerClipMediaItem(
     modifier: Modifier = Modifier,
     mediaItem: MediaItem
 ) {
-    Box(
-        modifier = modifier
-    ) {
-        GifImage(
+    Box(modifier = modifier) {
+        PickerGifImage(
             modifier = Modifier.fillMaxSize(),
             key = mediaItem,
             url = mediaItem.lowQualityMetaData?.url,
@@ -171,16 +154,13 @@ fun ClipMediaItem(
         )
         mediaItem.title?.let {
             val brush = Brush.verticalGradient(
-                colors = listOf(
-                    Color.Transparent,
-                    Color.Black
-                )
+                colors = listOf(Color.Transparent, Color.Black)
             )
             Text(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(brush)
-                    .align(alignment = Alignment.BottomStart)
+                    .align(Alignment.BottomStart)
                     .padding(5.dp),
                 text = it,
                 fontSize = 12.sp,

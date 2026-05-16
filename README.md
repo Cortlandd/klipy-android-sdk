@@ -109,7 +109,7 @@ class App : Application() {
         super.onCreate()
         val repo = KlipySdk.create(
             context = this,
-            secretKey = "KLIPY_API_KEY",
+            apiKey = "KLIPY_API_KEY",
             enableLogging = true
         )
 
@@ -165,7 +165,7 @@ Klipy API key directly to the picker fragment:
 ```kotlin
 val dialog = KlipyPickerDialogFragment.newInstance(
     config = config,
-    secretKey = "KLIPY_API_KEY",
+    apiKey = "KLIPY_API_KEY",
     enableLogging = true
 ).apply {
     listener = this@ChatFragment

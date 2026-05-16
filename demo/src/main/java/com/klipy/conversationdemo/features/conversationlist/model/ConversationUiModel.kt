@@ -38,6 +38,13 @@ data class ConversationUiModel(
                 time = "13:02",
                 lastMessage = "hey, how’s it going?",
                 unreadMessages = 1
+            ),
+            ConversationUiModel(
+                id = 99,
+                name = "Ads Demo",
+                time = "Live",
+                lastMessage = "Benchmark the masonry feed with inline ads",
+                unreadMessages = 0
             )
         )
     }

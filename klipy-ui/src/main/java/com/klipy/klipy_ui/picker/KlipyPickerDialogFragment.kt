@@ -15,11 +15,18 @@ import android.view.KeyEvent
 import android.view.*
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.rememberNestedScrollInteropConnection
+import androidx.compose.ui.platform.ViewCompositionStrategy
+import androidx.compose.ui.unit.dp
 import androidx.core.os.bundleOf
 import androidx.core.widget.addTextChangedListener
 import androidx.lifecycle.lifecycleScope
-import androidx.recyclerview.widget.GridLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import com.cortlandwalker.klipy_ui.databinding.FragmentKlipyPickerBinding
 import com.google.android.material.R
 import com.google.android.material.bottomsheet.BottomSheetBehavior
@@ -32,6 +39,7 @@ import com.klipy.sdk.KlipySdk
 import com.klipy.sdk.model.MediaData
 import com.klipy.sdk.model.MediaItem
 import com.klipy.sdk.model.MediaType
+import com.klipy.sdk.model.isAD
 import com.klipy.sdk.model.singularName
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -88,8 +96,9 @@ class KlipyPickerDialogFragment : BottomSheetDialogFragment() {
     companion object {
         private val KLIPY_WEBSITE_URI: Uri = Uri.parse("https://klipy.com/en-US")
         private const val SEARCH_DEBOUNCE_MS = 350L
+        private const val AD_PREFETCH_ITEM_LIMIT = 72
         private const val ARG_CONFIG = "klipy_config"
-        private const val ARG_SECRET_KEY = "klipy_secret_key"
+        private const val ARG_API_KEY = "klipy_api_key"
         private const val ARG_BASE_API_URL = "klipy_base_api_url"
         private const val ARG_ENABLE_LOGGING = "klipy_enable_logging"
 
@@ -105,14 +114,14 @@ class KlipyPickerDialogFragment : BottomSheetDialogFragment() {
          */
         fun newInstance(
             config: KlipyPickerConfig,
-            secretKey: String,
+            apiKey: String,
             baseApiUrl: String = "https://api.klipy.com/api/v1/",
             enableLogging: Boolean = false
         ): KlipyPickerDialogFragment {
             return KlipyPickerDialogFragment().apply {
                 arguments = bundleOf(
                     ARG_CONFIG to config,
-                    ARG_SECRET_KEY to secretKey,
+                    ARG_API_KEY to apiKey,
                     ARG_BASE_API_URL to baseApiUrl,
                     ARG_ENABLE_LOGGING to enableLogging
                 )
@@ -135,10 +144,10 @@ class KlipyPickerDialogFragment : BottomSheetDialogFragment() {
     private fun buildRepoFromArgs(): KlipyRepository {
         val args = requireArguments()
 
-        val secretKey = args.getString(ARG_SECRET_KEY)
+        val apiKey = args.getString(ARG_API_KEY)
             ?: error(
-                "Missing secretKey. Either call KlipyUi.configure(repo) or use " +
-                        "KlipyPickerDialogFragment.newInstance(config, secretKey, ...)"
+                "Missing apiKey. Either call KlipyUi.configure(repo) or use " +
+                        "KlipyPickerDialogFragment.newInstance(config, apiKey, ...)"
             )
 
         val baseApiUrl = args.getString(ARG_BASE_API_URL) ?: "https://api.klipy.com/api/v1/"
@@ -146,16 +155,9 @@ class KlipyPickerDialogFragment : BottomSheetDialogFragment() {
 
         return KlipySdk.create(
             context = requireContext().applicationContext,
-            secretKey = secretKey,
+            apiKey = apiKey,
             baseApiUrl = baseApiUrl,
             enableLogging = enableLogging
-        )
-    }
-
-    private val adapter by lazy {
-        KlipyMediaAdapter(
-            loadingIndicatorColor = resolvePickerPalette().loadingIndicatorColor,
-            onClick = { onItemClicked(it) }
         )
     }
 
@@ -169,6 +171,7 @@ class KlipyPickerDialogFragment : BottomSheetDialogFragment() {
     private var loadJob: Job? = null
     private var searchDebounceJob: Job? = null
     private var suppressSearchTextChanges = false
+    private var displayedItems by mutableStateOf<List<MediaItem>>(emptyList())
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -199,6 +202,7 @@ class KlipyPickerDialogFragment : BottomSheetDialogFragment() {
 
             behavior.state = BottomSheetBehavior.STATE_EXPANDED
             behavior.skipCollapsed = true
+            behavior.isDraggable = false
         }
     }
 
@@ -212,12 +216,14 @@ class KlipyPickerDialogFragment : BottomSheetDialogFragment() {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        resetPickerSession()
         applyPickerTheme()
         setupTabs()
-        setupRecycler()
+        setupComposeContent()
         setupSearch()
         setupRetry()
         setupPoweredByFooter()
+        updateAdMeasurements()
 
         // Set initial media type but do NOT auto-load
         val initialType = config.initialMediaType
@@ -234,6 +240,8 @@ class KlipyPickerDialogFragment : BottomSheetDialogFragment() {
     }
 
     override fun onDestroyView() {
+        resetPickerSession()
+        loadJob?.cancel()
         searchDebounceJob?.cancel()
         super.onDestroyView()
         _binding = null
@@ -262,34 +270,24 @@ class KlipyPickerDialogFragment : BottomSheetDialogFragment() {
         })
     }
 
-    private fun setupRecycler() {
-        val layoutManager = GridLayoutManager(requireContext(), config.columns)
-
-        binding.recyclerMedia.apply {
-            this.layoutManager = layoutManager
-            adapter = this@KlipyPickerDialogFragment.adapter
-
-            addOnScrollListener(object : RecyclerView.OnScrollListener() {
-                override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
-                    super.onScrolled(recyclerView, dx, dy)
-                    if (dy <= 0) return
-
-                    val visibleItemCount = layoutManager.childCount
-                    val totalItemCount = layoutManager.itemCount
-                    val firstVisibleItemPosition = layoutManager.findFirstVisibleItemPosition()
-                    val threshold = 6
-
-                    val shouldLoadMore =
-                        !isLoading &&
-                                hasMore &&
-                                totalItemCount > 0 &&
-                                visibleItemCount + firstVisibleItemPosition >= totalItemCount - threshold
-
-                    if (shouldLoadMore) {
-                        loadNextPage()
-                    }
-                }
-            })
+    private fun setupComposeContent() {
+        binding.composeMedia.apply {
+            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
+            setContent {
+                PickerMasonryLayout(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .nestedScroll(rememberNestedScrollInteropConnection()),
+                    items = displayedItems,
+                    isLoading = isLoading,
+                    gap = 1.dp,
+                    onLoadMore = { loadNextPage() },
+                    onMediaItemClicked = { onItemClicked(it) }
+                )
+            }
+            addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ ->
+                updateAdMeasurements()
+            }
         }
     }
 
@@ -390,13 +388,14 @@ class KlipyPickerDialogFragment : BottomSheetDialogFragment() {
 
         binding.root.setBackgroundColor(palette.backgroundColor)
         binding.layoutContentState.setBackgroundColor(palette.backgroundColor)
-        binding.recyclerMedia.setBackgroundColor(palette.backgroundColor)
-        binding.footerPoweredBy.setBackgroundColor(palette.surfaceColor)
+        binding.composeMedia.setBackgroundColor(palette.backgroundColor)
+        binding.footerContainer.setBackgroundColor(Color.WHITE)
+        binding.footerPoweredBy.setBackgroundColor(Color.WHITE)
         binding.viewFooterDivider.setBackgroundColor(palette.outlineColor)
 
         binding.textOfflineTitle.setTextColor(palette.onSurfaceColor)
         binding.textOfflineMessage.setTextColor(palette.secondaryTextColor)
-        binding.textPoweredBy.setTextColor(palette.onSurfaceColor)
+        binding.textPoweredBy.setTextColor(Color.BLACK)
         binding.progressLoading.indeterminateTintList = ColorStateList.valueOf(palette.primaryColor)
 
         binding.buttonRetry.backgroundTintList = ColorStateList.valueOf(palette.buttonColor)
@@ -519,7 +518,7 @@ class KlipyPickerDialogFragment : BottomSheetDialogFragment() {
     /** Clear items and reset paging flags without network call. */
     private fun clearItems() {
         currentItems.clear()
-        adapter.submitList(currentItems.toList())
+        displayedItems = currentItems.toList()
         hasMore = false
         isLoading = false
         showContentState()
@@ -550,7 +549,7 @@ class KlipyPickerDialogFragment : BottomSheetDialogFragment() {
         hasMore = true
         isLoading = false
         currentItems.clear()
-        adapter.submitList(currentItems.toList())
+        displayedItems = currentItems.toList()
 
         loadPage(reset = true)
     }
@@ -574,6 +573,7 @@ class KlipyPickerDialogFragment : BottomSheetDialogFragment() {
             handleConnectivityFailure(reset)
             return
         }
+        updateAdMeasurements()
 
         isLoading = true
 
@@ -599,11 +599,13 @@ class KlipyPickerDialogFragment : BottomSheetDialogFragment() {
                         currentItems.addAll(pageItems)
                     }
 
-                    adapter.submitList(currentItems.toList())
+                    PickerMasonryMeasurementsCalculator.itemMinWidth = data.itemMinWidth
+                    PickerMasonryMeasurementsCalculator.adMaxResizePercentage = data.adMaxResizePercentage
+                    displayedItems = currentItems.toList()
 
                     showContentState()
                     if (reset) {
-                        binding.recyclerMedia.animate()
+                        binding.composeMedia.animate()
                             .alpha(1f)
                             .setDuration(150)
                             .start()
@@ -619,6 +621,9 @@ class KlipyPickerDialogFragment : BottomSheetDialogFragment() {
                 }
 
             isLoading = false
+            if (currentItems.none { it.isAD() } && currentItems.size < AD_PREFETCH_ITEM_LIMIT && hasMore) {
+                loadNextPage()
+            }
         }
     }
 
@@ -654,6 +659,17 @@ class KlipyPickerDialogFragment : BottomSheetDialogFragment() {
         dismiss()
     }
 
+    private fun resetPickerSession() {
+        currentItems.clear()
+        displayedItems = emptyList()
+        currentFilter = null
+        currentType = null
+        hasMore = true
+        isLoading = false
+        config.mediaTypes.forEach(repo::reset)
+        PickerMasonryMeasurementsCalculator.reset()
+    }
+
     private fun retryCurrentRequest() {
         hasMore = true
         startNewSearch()
@@ -661,19 +677,19 @@ class KlipyPickerDialogFragment : BottomSheetDialogFragment() {
 
     private fun showLoadingState() {
         binding.layoutOfflineState.visibility = View.GONE
-        binding.recyclerMedia.visibility = View.VISIBLE
+        binding.composeMedia.visibility = View.VISIBLE
         binding.progressLoading.visibility = View.VISIBLE
     }
 
     private fun showContentState() {
         binding.layoutOfflineState.visibility = View.GONE
-        binding.recyclerMedia.visibility = View.VISIBLE
+        binding.composeMedia.visibility = View.VISIBLE
         binding.progressLoading.visibility = View.GONE
     }
 
     private fun showOfflineState() {
         binding.layoutOfflineState.visibility = View.VISIBLE
-        binding.recyclerMedia.visibility = View.GONE
+        binding.composeMedia.visibility = View.GONE
         binding.progressLoading.visibility = View.GONE
     }
 
@@ -706,6 +722,29 @@ class KlipyPickerDialogFragment : BottomSheetDialogFragment() {
 
         return capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) &&
             capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
+    }
+
+    private fun updateAdMeasurements() {
+        val metrics = resources.displayMetrics
+        val recyclerWidth = currentRecyclerWidthPx()
+        val recyclerHeight = binding.composeMedia.height.takeIf { it > 0 }
+            ?: (metrics.heightPixels * 0.45f).toInt()
+
+        KlipySdk.updateScreenMeasurements(
+            repository = repo,
+            context = requireContext().applicationContext,
+            containerWidthPx = recyclerWidth,
+            containerHeightPx = recyclerHeight
+        )
+    }
+
+    private fun currentRecyclerWidthPx(): Int {
+        val metrics = resources.displayMetrics
+        return (
+            binding.composeMedia.width -
+                binding.composeMedia.paddingLeft -
+                binding.composeMedia.paddingRight
+            ).takeIf { it > 0 } ?: metrics.widthPixels
     }
 
 }

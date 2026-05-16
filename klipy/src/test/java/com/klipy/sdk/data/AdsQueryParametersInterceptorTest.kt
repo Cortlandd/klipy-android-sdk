@@ -99,6 +99,23 @@ class AdsQueryParametersInterceptorTest {
     }
 
     @Test
+    fun `annotated requests use browser style user agent`() {
+        val interceptor = AdsQueryParametersInterceptor(
+            deviceInfoProvider = deviceInfoProvider(userAgent = "Mozilla/5.0 Test UA"),
+            screenMeasurementsProvider = screenMeasurementsProvider(),
+            advertisingInfoProvider = advertisingInfoProvider()
+        )
+        val chain = RecordingChain(
+            initialUrl = "https://api.klipy.com/api/v1/key/gifs/trending?page=1".toHttpUrl(),
+            invocation = Invocation.of(method("annotated"), emptyList<Any>())
+        )
+
+        interceptor.intercept(chain)
+
+        assertEquals("Mozilla/5.0 Test UA", chain.proceededRequest.header("User-Agent"))
+    }
+
+    @Test
     fun `plain requests do not receive ad iframe parameter`() {
         val interceptor = AdsQueryParametersInterceptor(
             deviceInfoProvider = deviceInfoProvider(),
@@ -117,11 +134,11 @@ class AdsQueryParametersInterceptorTest {
 
     private fun method(name: String): Method = TestService::class.java.getDeclaredMethod(name)
 
-    private fun deviceInfoProvider() = object : DeviceInfoProvider {
+    private fun deviceInfoProvider(userAgent: String? = null) = object : DeviceInfoProvider {
         override fun getDeviceId(): String = "device-id"
         override fun getCarrier(): String? = "carrier"
         override fun getNetworkOperator(): String? = "310260"
-        override fun getUserAgent(): String? = null
+        override fun getUserAgent(): String? = userAgent
     }
 
     private fun screenMeasurementsProvider() = object : ScreenMeasurementsProvider {

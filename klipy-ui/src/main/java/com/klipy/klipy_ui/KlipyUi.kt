@@ -12,7 +12,7 @@ import com.klipy.sdk.KlipyRepository
  * ```kotlin
  * val repo = KlipySdk.create(
  *   context = this,
- *   secretKey = "YOUR_KEY",
+ *   apiKey = "YOUR_KEY",
  *   enableLogging = true
  * )
  * KlipyUi.configure(repo)
@@ -60,7 +60,7 @@ object KlipyUi {
         return getRepositoryOrNull()
             ?: error(
                 "KlipyUi is not configured. Either call KlipyUi.configure(repo) or use " +
-                        "KlipyPickerDialogFragment.newInstance(config, secretKey, ...)"
+                        "KlipyPickerDialogFragment.newInstance(config, apiKey, ...)"
             )
     }
 }

@@ -1,44 +1,63 @@
-package com.klipy.conversationdemo.features.conversation.model
+package com.klipy.klipy_ui.picker
 
 import com.klipy.sdk.model.MediaItem
 import com.klipy.sdk.model.isAD
 import kotlin.math.abs
 import kotlin.math.min
 
-typealias MediaItemRow = List<MediaItemUIModel>
+internal typealias PickerMediaItemRow = List<PickerMediaItemUIModel>
 
-object MasonryMeasurementsCalculator {
+internal data class PickerMediaItemUIModel(
+    val mediaItem: MediaItem,
+    var measuredWidth: Int,
+    var measuredHeight: Int
+)
+
+internal object PickerMasonryMeasurementsCalculator {
     private const val ITEM_MIN_HEIGHT = 50
     private const val ITEM_MAX_HEIGHT = 180
     private const val MAX_ITEMS_PER_ROW = 4
 
     private var calculatedItems = mutableListOf<MediaItem>()
-    private var calculatedResults = mutableListOf<MediaItemRow>()
+    private var calculatedResults = mutableListOf<PickerMediaItemRow>()
+    private var lastContainerWidth = -1
+    private var lastGap = -1
+    private var lastItemMinWidth = -1
+    private var lastAdMaxResizePercentage = Float.NaN
 
     var itemMinWidth: Int = 0
     var adMaxResizePercentage: Float = 0F
 
-    /**
-     * Splits a list of items into rows based on a maximum number of items per row.
-     * The actual items per row may be adjusted by `precalculateSingleRow()`.
-     *
-     * @param {Array} items - The full list of items to arrange in rows.
-     * @return {Array} rows - A list of rows, where each row is an array of items.
-     */
+    fun reset() {
+        calculatedItems.clear()
+        calculatedResults.clear()
+        lastContainerWidth = -1
+        lastGap = -1
+        lastItemMinWidth = -1
+        lastAdMaxResizePercentage = Float.NaN
+        itemMinWidth = 0
+        adMaxResizePercentage = 0F
+    }
+
     fun createRows(
         items: List<MediaItem>,
         containerWidth: Int,
         gap: Int
-    ): List<MediaItemRow> {
+    ): List<PickerMediaItemRow> {
         val isNewList = isNewList(calculatedItems, items)
-        if (isNewList) {
-            // If list is completely new, we calculate everything from scratch
+        val layoutConfigChanged =
+            lastContainerWidth != containerWidth ||
+                lastGap != gap ||
+                lastItemMinWidth != itemMinWidth ||
+                lastAdMaxResizePercentage != adMaxResizePercentage
+
+        if (isNewList || layoutConfigChanged) {
             calculatedResults = calculateRows(items, containerWidth, gap).toMutableList()
         } else if (items.size != calculatedItems.size) {
-            // If items were added to the list, we take last row of previous list + new list
-            // This is needed because last row of previous list may have changed after adding new items
-            val lastCalculatedRow = calculatedResults.last()
-            calculatedResults.remove(lastCalculatedRow)
+            val lastCalculatedRow = calculatedResults.lastOrNull()
+            if (lastCalculatedRow != null) {
+                calculatedResults.remove(lastCalculatedRow)
+            }
             val itemsToCalculate = items.subList(
                 calculatedResults.flatten().size,
                 items.size
@@ -46,7 +65,12 @@ object MasonryMeasurementsCalculator {
             val newRows = calculateRows(itemsToCalculate, containerWidth, gap)
             calculatedResults = (calculatedResults + newRows).toMutableList()
         }
+
         calculatedItems = items.toMutableList()
+        lastContainerWidth = containerWidth
+        lastGap = gap
+        lastItemMinWidth = itemMinWidth
+        lastAdMaxResizePercentage = adMaxResizePercentage
         return calculatedResults
     }
 
@@ -54,8 +78,8 @@ object MasonryMeasurementsCalculator {
         items: List<MediaItem>,
         containerWidth: Int,
         gap: Int
-    ): List<MediaItemRow> {
-        val rows = mutableListOf<MediaItemRow>()
+    ): List<PickerMediaItemRow> {
+        val rows = mutableListOf<PickerMediaItemRow>()
         var currentIndex = 0
 
         while (currentIndex < items.size) {
@@ -65,7 +89,6 @@ object MasonryMeasurementsCalculator {
             )
 
             val adjustedRow = precalculateSingleRow(possibleItemsInRow, containerWidth, gap)
-
             rows.add(adjustedRow)
             currentIndex += adjustedRow.size
         }
@@ -77,43 +100,38 @@ object MasonryMeasurementsCalculator {
         items: List<MediaItem>,
         containerWidth: Int,
         gap: Int
-    ): MediaItemRow {
-        val adIndex = items.indexOfFirst { it.isAD() }
-        if (adIndex > 0) {
-            return precalculateSingleRow(
-                items = items.subList(0, adIndex),
-                containerWidth = containerWidth,
-                gap = gap
-            )
-        }
-
-        if (adIndex == 0) {
-            return createDedicatedAdRow(items.first(), containerWidth)
-        }
-
+    ): PickerMediaItemRow {
         var possibleItemsInRow = items
         var minimumChange = Int.MAX_VALUE
-        var currentRow = mutableListOf<MediaItemUIModel>()
+        var currentRow = mutableListOf<PickerMediaItemUIModel>()
         var itemsHeightInRow = 0
 
         var currentMinHeight = ITEM_MIN_HEIGHT
         var currentMaxHeight = ITEM_MAX_HEIGHT
 
-        // Select the best-fitting row of items by adjusting height to minimize width difference from the container.
+        val adIndex = possibleItemsInRow.indexOfFirst { it.isAD() }
+        if (adIndex > 1) {
+            possibleItemsInRow = possibleItemsInRow.subList(0, 2)
+        } else if (adIndex >= 0) {
+            val adMeta = possibleItemsInRow[adIndex].lowQualityMetaData
+            if (adMeta != null) {
+                currentMinHeight = adMeta.height
+                currentMaxHeight = adMeta.height
+            }
+        }
+
         for (height in currentMinHeight..currentMaxHeight) {
-            val itemsInRow = mutableListOf<MediaItemUIModel>()
+            val itemsInRow = mutableListOf<PickerMediaItemUIModel>()
             for (element in possibleItemsInRow) {
                 val item = element.copy()
-                itemsInRow.add(MediaItemUIModel(item, 0, 0))
-                val mediaHeight = item.lowQualityMetaData!!.height
-                val mediaWidth = item.lowQualityMetaData!!.width
-
+                val meta = item.lowQualityMetaData ?: continue
+                itemsInRow.add(PickerMediaItemUIModel(item, 0, 0))
                 val newWidth = if (item.isAD()) {
-                    item.lowQualityMetaData!!.width
+                    meta.width
                 } else {
-                    Math.round((mediaWidth.toFloat() * height) / mediaHeight)
+                    ((meta.width.toFloat() * height) / meta.height).toInt()
                 }
-                itemsInRow[itemsInRow.size - 1] =
+                itemsInRow[itemsInRow.lastIndex] =
                     itemsInRow.last().copy(measuredWidth = newWidth)
                 val totalWidth =
                     itemsInRow.sumOf { it.measuredWidth } + (itemsInRow.size - 1) * gap
@@ -127,92 +145,54 @@ object MasonryMeasurementsCalculator {
             }
         }
 
-        // Set item heights, adjust non-ad item widths, and keep ad widths unchanged.
-        val nonAdItems = currentRow.filter { it.mediaItem.isAD().not() }
+        val nonAdItems = currentRow.filter { !it.mediaItem.isAD() }
         currentRow.forEachIndexed { index, item ->
-            val addition = if (item.mediaItem.isAD()) {
-                0
-            } else {
-                minimumChange / nonAdItems.size
-            }
+            val addition = if (item.mediaItem.isAD()) 0 else minimumChange / nonAdItems.size.coerceAtLeast(1)
             currentRow[index].apply {
                 measuredWidth = item.measuredWidth + addition
                 measuredHeight = itemsHeightInRow
             }
         }
 
-        // Ensure all items fit by setting minimum widths and resizing the ad if necessary.
         if (adIndex >= 0 && nonAdItems.size != currentRow.size) {
-            // Find items with width less than the minimum allowed width
             val itemsBelowMinWidth = nonAdItems.filter { it.measuredWidth < itemMinWidth }
             if (itemsBelowMinWidth.isNotEmpty()) {
-                // Set all such items to the minimum width
                 itemsBelowMinWidth.forEach {
                     it.measuredWidth = itemMinWidth
                 }
-                // Compute the updated total row width, including gaps
-                val newRowWidth =
-                    currentRow.sumOf { it.measuredWidth } + (currentRow.size - 1) * gap
+                val newRowWidth = currentRow.sumOf { it.measuredWidth } + (currentRow.size - 1) * gap
 
                 if (newRowWidth > containerWidth) {
-                    // Adjust the advertisement width to fit within the container
                     val adItem = currentRow[adIndex]
                     val minAdWidth = (adItem.measuredWidth * (1F - adMaxResizePercentage)).toInt()
                     var resizedAdWidth = adItem.measuredWidth - (newRowWidth - containerWidth)
                     if (resizedAdWidth < minAdWidth) {
                         val adWidthDifference = minAdWidth - resizedAdWidth
                         itemsBelowMinWidth.forEach {
-                            it.measuredWidth -= adWidthDifference / itemsBelowMinWidth.size
+                            it.measuredWidth -= adWidthDifference / itemsBelowMinWidth.size.coerceAtLeast(1)
                         }
                         resizedAdWidth = minAdWidth
                     }
 
-                    // Scale ad height proportionally to maintain aspect ratio
                     adItem.measuredHeight =
                         (adItem.measuredHeight * (resizedAdWidth / adItem.measuredWidth.toFloat())).toInt()
                     adItem.measuredWidth = resizedAdWidth
 
-                    // Update height of all resized items to match the advertisement
                     itemsBelowMinWidth.forEach {
                         it.measuredHeight = adItem.measuredHeight
                     }
                 }
             }
         }
+
         return currentRow
     }
 
-    private fun createDedicatedAdRow(
-        adItem: MediaItem,
-        containerWidth: Int
-    ): MediaItemRow {
-        val meta = adItem.lowQualityMetaData
-        if (meta == null || meta.width <= 0 || meta.height <= 0) {
-            return listOf(
-                MediaItemUIModel(
-                    mediaItem = adItem,
-                    measuredWidth = containerWidth,
-                    measuredHeight = 84
-                )
-            )
-        }
-        val scaledHeight = ((containerWidth.toFloat() * meta.height) / meta.width).toInt()
-            .coerceAtLeast(84)
-
-        return listOf(
-            MediaItemUIModel(
-                mediaItem = adItem,
-                measuredWidth = containerWidth,
-                measuredHeight = scaledHeight
-            )
-        )
-    }
-
     private fun isNewList(existingItems: List<MediaItem>, newItems: List<MediaItem>): Boolean {
-        return existingItems.isEmpty() || newItems.size < existingItems.size
-                || existingItems.map { it.id } != newItems.map { it.id }.take(existingItems.size)
+        return existingItems.isEmpty() ||
+            newItems.size < existingItems.size ||
+            existingItems.map { it.id } != newItems.map { it.id }.take(existingItems.size)
     }
-
 }
 
-fun MediaItemRow.hasAd() = this.firstOrNull { it.mediaItem.isAD() } != null
+internal fun PickerMediaItemRow.hasAd(): Boolean = any { it.mediaItem.isAD() }

@@ -101,8 +101,18 @@ class ScreenMeasurementsProviderImpl(
     private val context: Context
 ) : ScreenMeasurementsProvider {
 
-    override var device: Measurements = Measurements(0, 0)
-    override var mediaSelectorContainer: Measurements = Measurements(0, 0)
+    override var device: Measurements
+    override var mediaSelectorContainer: Measurements
+
+    init {
+        val metrics = context.resources.displayMetrics
+        val defaultMeasurements = Measurements(
+            width = metrics.widthPixels,
+            height = metrics.heightPixels
+        )
+        device = defaultMeasurements
+        mediaSelectorContainer = defaultMeasurements
+    }
 
     override fun getDensityScaleFactor(): Float {
         val metrics = context.resources.displayMetrics
@@ -203,12 +213,19 @@ class AdsQueryParametersInterceptor(
             }
 
         val newUrl = builder.build()
+        val newRequest = originalRequest.newBuilder()
+            .url(newUrl)
+            .apply {
+                deviceInfoProvider.getUserAgent()
+                    ?.takeIf { it.isNotBlank() }
+                    ?.let { userAgent ->
+                        // Match the official demo app's browser-like ad requests.
+                        header(USER_AGENT, userAgent)
+                    }
+            }
+            .build()
 
-        return chain.proceed(
-            originalRequest.newBuilder()
-                .url(newUrl)
-                .build()
-        )
+        return chain.proceed(newRequest)
     }
 
     private fun okhttp3.HttpUrl.Builder.addQueryParameterIfMissing(
@@ -228,6 +245,7 @@ class AdsQueryParametersInterceptor(
         const val AD_MAX_WIDTH = "ad-max-width"
         const val AD_MIN_HEIGHT = "ad-min-height"
         const val AD_MAX_HEIGHT = "ad-max-height"
+        const val USER_AGENT = "User-Agent"
         const val APP_VERSION = "ad-app-version"
         const val OS = "ad-os"
         const val OS_VERSION = "ad-osv"

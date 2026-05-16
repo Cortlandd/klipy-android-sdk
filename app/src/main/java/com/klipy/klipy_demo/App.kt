@@ -10,7 +10,7 @@ class App : Application() {
         KlipyUi.configure {
             KlipySdk.create(
                 context = this,
-                secretKey = BuildConfig.KLIPY_API_KEY,
+                apiKey = BuildConfig.KLIPY_API_KEY,
                 enableLogging = true
             )
         }

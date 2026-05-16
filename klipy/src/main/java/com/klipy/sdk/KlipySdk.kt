@@ -23,15 +23,15 @@ object KlipySdk {
      * Create a new [KlipyRepository] instance.
      *
      * @param context Android context; will be converted to applicationContext internally.
-     * @param secretKey Your Klipy API key (secret key segment in the base URL).
-     * @param baseApiUrl Base API URL up to but not including the secret key.
+     * @param apiKey Your Klipy API key (path segment in the base URL).
+     * @param baseApiUrl Base API URL up to but not including the API key.
      *        Default: "https://api.klipy.com/api/v1/"
      * @param enableLogging If true, configures OkHttp's HttpLoggingInterceptor with BASIC level.
      */
     @JvmStatic
     fun create(
         context: Context,
-        secretKey: String,
+        apiKey: String,
         baseApiUrl: String = "https://api.klipy.com/api/v1/",
         enableLogging: Boolean = false
     ): KlipyRepository {
@@ -69,7 +69,7 @@ object KlipySdk {
             .create()
 
         val normalizedBase = if (baseApiUrl.endsWith("/")) baseApiUrl else "$baseApiUrl/"
-        val baseWithKey = normalizedBase + secretKey.trimEnd('/') + "/"
+        val baseWithKey = normalizedBase + apiKey.trimEnd('/') + "/"
 
         val retrofit = Retrofit.Builder()
             .baseUrl(baseWithKey)
@@ -97,16 +97,52 @@ object KlipySdk {
             memesDataSource = memesDataSource
         )
 
-        return KlipyRepositoryImpl(selector)
+        return KlipyRepositoryImpl(
+            mediaDataSourceSelector = selector,
+            screenMeasurementsProvider = screenMeasurementsProvider
+        )
     }
+
+    /**
+     * Update screen/container measurements for ad-enabled requests.
+     *
+     * This is a no-op for custom repository implementations that were not created by [create].
+     */
+    @JvmStatic
+    fun updateScreenMeasurements(
+        repository: KlipyRepository,
+        context: Context,
+        containerWidthPx: Int,
+        containerHeightPx: Int
+    ) {
+        val metrics = context.applicationContext.resources.displayMetrics
+        val device = Measurements(
+            width = metrics.widthPixels,
+            height = metrics.heightPixels
+        )
+        val container = Measurements(
+            width = containerWidthPx.takeIf { it > 0 } ?: device.width,
+            height = containerHeightPx.takeIf { it > 0 } ?: device.height
+        )
+
+        (repository as? AdMeasurementAwareRepository)?.updateScreenMeasurements(
+            device = device,
+            container = container
+        )
+    }
+}
+
+private interface AdMeasurementAwareRepository {
+    fun updateScreenMeasurements(device: Measurements, container: Measurements)
 }
 
 /**
  * Concrete implementation of [KlipyRepository], delegating to [MediaDataSourceSelector].
  */
 private class KlipyRepositoryImpl(
-    private val mediaDataSourceSelector: MediaDataSourceSelector
-) : KlipyRepository {
+    private val mediaDataSourceSelector: MediaDataSourceSelector,
+    private val screenMeasurementsProvider: ScreenMeasurementsProvider
+) : KlipyRepository, AdMeasurementAwareRepository {
 
     override suspend fun getAvailableMediaTypes(): List<MediaType> =
         listOf(MediaType.GIF, MediaType.STICKER, MediaType.CLIP, MediaType.MEME)
@@ -233,5 +269,10 @@ private class KlipyRepositoryImpl(
 
     override fun reset(mediaType: MediaType) {
         mediaDataSourceSelector.getDataSource(mediaType).reset()
+    }
+
+    override fun updateScreenMeasurements(device: Measurements, container: Measurements) {
+        screenMeasurementsProvider.device = device
+        screenMeasurementsProvider.mediaSelectorContainer = container
     }
 }

@@ -21,6 +21,12 @@
         android:scaleType="centerCrop"
         android:visibility="invisible" />
 
+    <FrameLayout
+        android:id="@+id/adContainer"
+        android:layout_width="match_parent"
+        android:layout_height="120dp"
+        android:visibility="gone" />
+
     <!-- Small play icon overlay, only for clips -->
     <ImageView
         android:id="@+id/playIcon"
