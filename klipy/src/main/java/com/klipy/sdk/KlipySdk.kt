@@ -24,15 +24,12 @@ object KlipySdk {
      *
      * @param context Android context; will be converted to applicationContext internally.
      * @param apiKey Your Klipy API key (path segment in the base URL).
-     * @param baseApiUrl Base API URL up to but not including the API key.
-     *        Default: "https://api.klipy.com/api/v1/"
      * @param enableLogging If true, configures OkHttp's HttpLoggingInterceptor with BASIC level.
      */
     @JvmStatic
     fun create(
         context: Context,
         apiKey: String,
-        baseApiUrl: String = "https://api.klipy.com/api/v1/",
         enableLogging: Boolean = false
     ): KlipyRepository {
         val appContext = context.applicationContext
@@ -68,7 +65,7 @@ object KlipySdk {
             .registerTypeAdapter(MediaItemDto::class.java, MediaItemDtoDeserializer())
             .create()
 
-        val normalizedBase = if (baseApiUrl.endsWith("/")) baseApiUrl else "$baseApiUrl/"
+        val normalizedBase = "https://api.klipy.com/api/v1/"
         val baseWithKey = normalizedBase + apiKey.trimEnd('/') + "/"
 
         val retrofit = Retrofit.Builder()

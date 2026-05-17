@@ -4,4 +4,8 @@
     <string name="klipy_offline_title">No internet connection</string>
     <string name="klipy_offline_message">Reconnect to the internet to load content from Klipy.</string>
     <string name="klipy_retry">Retry</string>
+    <string name="klipy_confirm_selection_title">Confirm selection</string>
+    <string name="klipy_confirm_selection_message">Use this Klipy item?</string>
+    <string name="klipy_confirm_selection_positive">Select</string>
+    <string name="klipy_confirm_selection_negative">Cancel</string>
 </resources>

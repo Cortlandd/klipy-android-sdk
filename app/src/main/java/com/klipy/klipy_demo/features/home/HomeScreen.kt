@@ -51,7 +51,7 @@ fun HomeScreen(
         )
 
         Text(
-            text = "Benchmark-style sample for the XML picker. Configure layout, theme mode, feed defaults, and visible media tabs before opening it.",
+            text = "Benchmark-style sample for the Klipy picker. Configure layout, shell behavior, feed defaults, and visible media tabs before opening it.",
             style = MaterialTheme.typography.bodyMedium
         )
 
@@ -111,6 +111,9 @@ fun HomeScreen(
             onColumnsChanged = { reducer.postAction(HomeAction.ColumnsChanged(it)) },
             onDefaultFeedChanged = { reducer.postAction(HomeAction.DefaultFeedChanged(it)) },
             onCustomColorsChanged = { reducer.postAction(HomeAction.CustomColorsChanged(it)) },
+            onSearchVisibilityChanged = { reducer.postAction(HomeAction.SearchVisibilityChanged(it)) },
+            onConfirmationScreenChanged = { reducer.postAction(HomeAction.ConfirmationScreenChanged(it)) },
+            onItemSpacingChanged = { reducer.postAction(HomeAction.ItemSpacingChanged(it)) },
             onMediaTypeToggled = { reducer.postAction(HomeAction.MediaTypeToggled(it)) }
         )
     }
@@ -125,6 +128,9 @@ private fun PickerSettingsSheet(
     onColumnsChanged: (Int) -> Unit,
     onDefaultFeedChanged: (DemoPickerDefaultFeed) -> Unit,
     onCustomColorsChanged: (Boolean) -> Unit,
+    onSearchVisibilityChanged: (Boolean) -> Unit,
+    onConfirmationScreenChanged: (Boolean) -> Unit,
+    onItemSpacingChanged: (Int) -> Unit,
     onMediaTypeToggled: (MediaType) -> Unit
 ) {
     ModalBottomSheet(onDismissRequest = onDismiss) {
@@ -170,6 +176,18 @@ private fun PickerSettingsSheet(
                 }
             }
 
+            SettingsSection(title = "Item spacing") {
+                ChipRow {
+                    listOf(0, 1, 2, 4, 8).forEach { spacing ->
+                        FilterChip(
+                            selected = settings.itemSpacingDp == spacing,
+                            onClick = { onItemSpacingChanged(spacing) },
+                            label = { Text("${spacing}dp") }
+                        )
+                    }
+                }
+            }
+
             SettingsSection(title = "Default feed") {
                 ChipRow {
                     DemoPickerDefaultFeed.entries.forEach { feed ->
@@ -195,6 +213,56 @@ private fun PickerSettingsSheet(
             }
 
             HorizontalDivider()
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Text(
+                        text = "Show search field",
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                    Text(
+                        text = "Lets us compare the full picker shell against simpler feed-first integrations.",
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+
+                Switch(
+                    checked = settings.showSearch,
+                    onCheckedChange = onSearchVisibilityChanged
+                )
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Text(
+                        text = "Confirm before select",
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                    Text(
+                        text = "Adds a preview confirmation step for normal media while keeping ads inline and untouched.",
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+
+                Switch(
+                    checked = settings.showConfirmationScreen,
+                    onCheckedChange = onConfirmationScreenChanged
+                )
+            }
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -267,6 +335,9 @@ private fun PickerDemoSettings.summary(): String {
     val mediaSummary = mediaTypes.joinToString { it.singularName() }
     return "Theme: ${themeMode.label} • " +
         "Columns: $columns • Feed: ${defaultFeed.label} • " +
+        "Search: ${if (showSearch) "On" else "Off"} • " +
+        "Confirm: ${if (showConfirmationScreen) "On" else "Off"} • " +
+        "Gap: ${itemSpacingDp}dp • " +
         "Colors: ${if (useCustomColors) "Custom" else "Default"} • " +
         "Tabs: $mediaSummary"
 }

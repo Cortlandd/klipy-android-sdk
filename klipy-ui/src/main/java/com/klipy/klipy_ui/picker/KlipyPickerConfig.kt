@@ -13,6 +13,9 @@ import kotlinx.parcelize.Parcelize
  * @property showTrending Whether to include "trending" content as a source.
  *                        If both [showRecents] and [showTrending] are true,
  *                        trending is used as the initial feed.
+ * @property showSearch Whether to show the search field in the picker shell.
+ * @property showConfirmationScreen Whether to confirm non-ad media selection before dismissing.
+ * @property itemSpacingDp Spacing in dp between visible media items.
  * @property initialMediaType Which tab is initially selected when the picker opens.
  * @property themeMode Visual theme for the picker sheet.
  * @property colors Optional high-level color overrides layered on top of [themeMode].
@@ -25,6 +28,9 @@ data class KlipyPickerConfig(
     val columns: Int = 3,
     val showRecents: Boolean = false,
     val showTrending: Boolean = true,
+    val showSearch: Boolean = true,
+    val showConfirmationScreen: Boolean = false,
+    val itemSpacingDp: Int = 1,
     val initialMediaType: MediaType = MediaType.GIF,
     val themeMode: KlipyPickerThemeMode = KlipyPickerThemeMode.AUTOMATIC,
     val colors: KlipyPickerColors? = null,

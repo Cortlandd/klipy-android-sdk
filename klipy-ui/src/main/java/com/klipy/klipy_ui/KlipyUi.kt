@@ -60,7 +60,7 @@ object KlipyUi {
         return getRepositoryOrNull()
             ?: error(
                 "KlipyUi is not configured. Either call KlipyUi.configure(repo) or use " +
-                        "KlipyPickerDialogFragment.newInstance(config, apiKey, ...)"
+                        "KlipyPickerDialogFragment.newInstance(config, apiKey)"
             )
     }
 }

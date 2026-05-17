@@ -42,6 +42,18 @@ class HomeReducer : Reducer<HomeState, HomeAction, HomeEffect>() {
                 state { it.copy(pickerSettings = it.pickerSettings.copy(useCustomColors = action.enabled)) }
             }
 
+            is HomeAction.SearchVisibilityChanged -> {
+                state { it.copy(pickerSettings = it.pickerSettings.copy(showSearch = action.enabled)) }
+            }
+
+            is HomeAction.ConfirmationScreenChanged -> {
+                state { it.copy(pickerSettings = it.pickerSettings.copy(showConfirmationScreen = action.enabled)) }
+            }
+
+            is HomeAction.ItemSpacingChanged -> {
+                state { it.copy(pickerSettings = it.pickerSettings.copy(itemSpacingDp = action.spacingDp)) }
+            }
+
             is HomeAction.MediaTypeToggled -> {
                 state {
                     it.copy(

@@ -25,6 +25,9 @@ data class PickerDemoSettings(
     val themeMode: KlipyPickerThemeMode = KlipyPickerThemeMode.AUTOMATIC,
     val defaultFeed: DemoPickerDefaultFeed = DemoPickerDefaultFeed.TRENDING,
     val useCustomColors: Boolean = false,
+    val showSearch: Boolean = true,
+    val showConfirmationScreen: Boolean = false,
+    val itemSpacingDp: Int = 1,
     val mediaTypes: List<MediaType> = DemoMediaTypes
 ) {
     fun withToggledMediaType(type: MediaType): PickerDemoSettings {
@@ -50,6 +53,9 @@ data class PickerDemoSettings(
             columns = columns,
             showTrending = defaultFeed == DemoPickerDefaultFeed.TRENDING,
             showRecents = defaultFeed == DemoPickerDefaultFeed.RECENTS,
+            showSearch = showSearch,
+            showConfirmationScreen = showConfirmationScreen,
+            itemSpacingDp = itemSpacingDp,
             initialMediaType = mediaTypes.firstOrNull() ?: MediaType.GIF,
             themeMode = themeMode,
             colors = if (useCustomColors) resolvedThemeMode.demoPickerColors() else null
@@ -104,6 +110,9 @@ sealed interface HomeAction {
     data class ColumnsChanged(val columns: Int) : HomeAction
     data class DefaultFeedChanged(val feed: DemoPickerDefaultFeed) : HomeAction
     data class CustomColorsChanged(val enabled: Boolean) : HomeAction
+    data class SearchVisibilityChanged(val enabled: Boolean) : HomeAction
+    data class ConfirmationScreenChanged(val enabled: Boolean) : HomeAction
+    data class ItemSpacingChanged(val spacingDp: Int) : HomeAction
     data class MediaTypeToggled(val type: MediaType) : HomeAction
 }
 

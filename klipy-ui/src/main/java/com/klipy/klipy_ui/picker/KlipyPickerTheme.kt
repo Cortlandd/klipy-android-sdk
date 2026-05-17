@@ -5,7 +5,7 @@ import androidx.annotation.ColorInt
 import kotlinx.parcelize.Parcelize
 
 /**
- * Theme mode for the XML picker.
+ * Theme mode for the picker.
  */
 enum class KlipyPickerThemeMode {
     AUTOMATIC,

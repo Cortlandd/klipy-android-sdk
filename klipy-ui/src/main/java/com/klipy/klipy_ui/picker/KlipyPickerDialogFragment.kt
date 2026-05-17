@@ -15,25 +15,38 @@ import android.view.KeyEvent
 import android.view.*
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.rememberNestedScrollInteropConnection
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.unit.dp
 import androidx.core.os.bundleOf
+import androidx.core.view.isGone
+import androidx.core.view.updateLayoutParams
 import androidx.core.widget.addTextChangedListener
 import androidx.lifecycle.lifecycleScope
 import com.cortlandwalker.klipy_ui.databinding.FragmentKlipyPickerBinding
-import com.google.android.material.R
+import com.cortlandwalker.klipy_ui.R as KlipyUiR
+import com.google.android.material.R as MaterialR
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.tabs.TabLayout
 import com.google.android.material.textfield.TextInputLayout
 import com.klipy.klipy_ui.KlipyUi
+import com.klipy.klipy_ui.components.MediaItemPreview
 import com.klipy.sdk.KlipyRepository
 import com.klipy.sdk.KlipySdk
 import com.klipy.sdk.model.MediaData
@@ -60,6 +73,9 @@ import kotlinx.coroutines.launch
  *       columns = 3,
  *       showRecents = false,
  *       showTrending = true,
+ *       showSearch = true,
+ *       showConfirmationScreen = false,
+ *       itemSpacingDp = 1,
  *       initialMediaType = MediaType.GIF
  *     )
  *
@@ -70,7 +86,8 @@ import kotlinx.coroutines.launch
  *   }
  *
  *   override fun onMediaSelected(item: MediaItem, searchTerm: String?) {
- *     // Do something with selection
+ *     // Send or preview the selected media item.
+ *     // Ads stay inline in the picker feed and are not routed here.
  *   }
  * }
  * ```
@@ -99,7 +116,6 @@ class KlipyPickerDialogFragment : BottomSheetDialogFragment() {
         private const val AD_PREFETCH_ITEM_LIMIT = 72
         private const val ARG_CONFIG = "klipy_config"
         private const val ARG_API_KEY = "klipy_api_key"
-        private const val ARG_BASE_API_URL = "klipy_base_api_url"
         private const val ARG_ENABLE_LOGGING = "klipy_enable_logging"
 
         fun newInstance(config: KlipyPickerConfig): KlipyPickerDialogFragment {
@@ -115,14 +131,12 @@ class KlipyPickerDialogFragment : BottomSheetDialogFragment() {
         fun newInstance(
             config: KlipyPickerConfig,
             apiKey: String,
-            baseApiUrl: String = "https://api.klipy.com/api/v1/",
             enableLogging: Boolean = false
         ): KlipyPickerDialogFragment {
             return KlipyPickerDialogFragment().apply {
                 arguments = bundleOf(
                     ARG_CONFIG to config,
                     ARG_API_KEY to apiKey,
-                    ARG_BASE_API_URL to baseApiUrl,
                     ARG_ENABLE_LOGGING to enableLogging
                 )
             }
@@ -146,16 +160,14 @@ class KlipyPickerDialogFragment : BottomSheetDialogFragment() {
         val apiKey = args.getString(ARG_API_KEY)
             ?: error(
                 "Missing apiKey. Either call KlipyUi.configure(repo) or use " +
-                        "KlipyPickerDialogFragment.newInstance(config, apiKey, ...)"
+                        "KlipyPickerDialogFragment.newInstance(config, apiKey)"
             )
 
-        val baseApiUrl = args.getString(ARG_BASE_API_URL) ?: "https://api.klipy.com/api/v1/"
         val enableLogging = args.getBoolean(ARG_ENABLE_LOGGING, false)
 
         return KlipySdk.create(
             context = requireContext().applicationContext,
             apiKey = apiKey,
-            baseApiUrl = baseApiUrl,
             enableLogging = enableLogging
         )
     }
@@ -184,7 +196,7 @@ class KlipyPickerDialogFragment : BottomSheetDialogFragment() {
 
         val dialog = dialog ?: return
         val bottomSheet =
-            dialog.findViewById<View>(R.id.design_bottom_sheet)
+            dialog.findViewById<View>(MaterialR.id.design_bottom_sheet)
                 ?: return
 
         bottomSheet.post {
@@ -215,6 +227,7 @@ class KlipyPickerDialogFragment : BottomSheetDialogFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         resetPickerSession()
         applyPickerTheme()
+        applySearchVisibility()
         setupTabs()
         setupComposeContent()
         setupSearch()
@@ -276,7 +289,7 @@ class KlipyPickerDialogFragment : BottomSheetDialogFragment() {
                         .nestedScroll(rememberNestedScrollInteropConnection()),
                     items = displayedItems,
                     isLoading = isLoading,
-                    gap = 1.dp,
+                    gap = config.itemSpacingDp.coerceIn(0, 24).dp,
                     onLoadMore = { loadNextPage() },
                     onMediaItemClicked = { onItemClicked(it) }
                 )
@@ -284,6 +297,18 @@ class KlipyPickerDialogFragment : BottomSheetDialogFragment() {
             addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ ->
                 updateAdMeasurements()
             }
+        }
+    }
+
+    private fun applySearchVisibility() {
+        binding.searchInputLayout.isGone = !config.showSearch
+        val topMarginPx = if (config.showSearch) {
+            (8 * resources.displayMetrics.density).toInt()
+        } else {
+            0
+        }
+        binding.layoutContentState.updateLayoutParams<ViewGroup.MarginLayoutParams> {
+            topMargin = topMarginPx
         }
     }
 
@@ -648,8 +673,48 @@ class KlipyPickerDialogFragment : BottomSheetDialogFragment() {
     }
 
     private fun onItemClicked(item: MediaItem) {
+        if (config.showConfirmationScreen && !item.isAD()) {
+            showConfirmationDialog(item)
+            return
+        }
+        deliverSelection(item)
+    }
+
+    private fun deliverSelection(item: MediaItem) {
         listener?.onMediaSelected(item, currentFilter)
         dismiss()
+    }
+
+    private fun showConfirmationDialog(item: MediaItem) {
+        val previewView = ComposeView(requireContext()).apply {
+            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnDetachedFromWindow)
+            setContent {
+                MaterialTheme {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 8.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        MediaItemPreview(item)
+                        Text(
+                            text = getString(KlipyUiR.string.klipy_confirm_selection_message),
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
+                }
+            }
+        }
+
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle(KlipyUiR.string.klipy_confirm_selection_title)
+            .setView(previewView)
+            .setNegativeButton(KlipyUiR.string.klipy_confirm_selection_negative, null)
+            .setPositiveButton(KlipyUiR.string.klipy_confirm_selection_positive) { _, _ ->
+                deliverSelection(item)
+            }
+            .show()
     }
 
     private fun resetPickerSession() {

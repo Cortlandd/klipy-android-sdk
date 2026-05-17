@@ -32,9 +32,9 @@ dependencyResolutionManagement {
 ```kotlin
 // app/build.gradle.kts
 dependencies {
-    implementation("com.github.Cortlandd.klipy-android-sdk:klipy:0.1.12")
+    implementation("com.github.Cortlandd.klipy-android-sdk:klipy:0.1.13")
     // If you want the ready-made picker fragment, klipy-ui already depends on klipy.
-    implementation("com.github.Cortlandd.klipy-android-sdk:klipy-ui:0.1.12")
+    implementation("com.github.Cortlandd.klipy-android-sdk:klipy-ui:0.1.13")
 }
 ```
 Or
@@ -128,6 +128,9 @@ class ChatFragment : Fragment(R.layout.fragment_chat), KlipyPickerListener {
             columns = 3,
             showRecents = true,
             showTrending = true,
+            showSearch = true,
+            showConfirmationScreen = true,
+            itemSpacingDp = 2,
             initialMediaType = MediaType.GIF
         )
 
@@ -209,10 +212,11 @@ repo.triggerShare(
 # Using the UI Picker (klipy-ui)
 klipy-ui ships a ready-made picker for apps that want a drop-in Klipy experience:
 - Implemented as a BottomSheetDialogFragment.
-- Supports GIFs, stickers, and clips (mp4).
-- Search-on-submit (no auto-search on open).
-- Infinite scroll / paging via RecyclerView.
-- Not tied to Compose – works in any Fragment-based app.
+- Supports GIFs, stickers, clips, memes, and inline ads returned by Klipy.
+- Search-on-submit with optional shell search visibility.
+- Optional confirmation before selecting normal media.
+- Infinite scroll / paging with a Compose-based masonry content surface inside a Fragment-friendly sheet.
+- Still usable from any Fragment-based app; hosts do not need to be Compose-first.
 
 Typical usage from a Fragment:
 ```kotlin
@@ -220,7 +224,10 @@ private fun openKlipyPicker() {
     val config = KlipyPickerConfig(
         columns = 3,
         showRecents = true,
-        showTrending = true
+        showTrending = true,
+        showSearch = true,
+        showConfirmationScreen = false,
+        itemSpacingDp = 1
     )
 
     val dialog = KlipyPickerDialogFragment.newInstance(config)
